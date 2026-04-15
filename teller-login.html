@@ -277,7 +277,7 @@
         // ============================================
         // CONFIGURATION
         // ============================================
-        const API_BASE_URL = "http://127.0.0.1:5000";
+        const API_BASE_URL = "https://web-production-9a5d1.up.railway.app";
         
         // ============================================
         // CHECK SERVER CONNECTION
@@ -299,7 +299,7 @@
                 }
             } catch (error) {
                 console.error('Server check error:', error);
-                statusDiv.innerHTML = '🔴 Cannot connect to server. Make sure Flask is running on port 5000';
+                statusDiv.innerHTML = '🔴 Cannot connect to server. Make sure the app is running on port 8080';
                 statusDiv.className = 'server-status server-offline';
                 return false;
             }
@@ -377,7 +377,7 @@
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                showError('Network error. Please check if server is running on port 5000');
+                showError('Network error. Please check if server is running on port 8080');
                 loginBtn.innerHTML = '🔓 LOGIN';
                 loginBtn.disabled = false;
             }
