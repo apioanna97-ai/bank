@@ -6,6 +6,13 @@ import logging
 import os
 import re
 
+# Load .env file for local development (ignored on Railway)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,15 +25,24 @@ CORS(app)
 # RAILWAY / PRODUCTION CONFIGURATION
 # ============================================
 
-# Get port from environment (Railway sets this)
 PORT = int(os.environ.get('PORT', 5000))
 
-# Database configuration - Priority: Railway MySQL URL > Local settings
-DATABASE_URL = os.environ.get('MYSQL_URL', os.environ.get('DATABASE_URL', ''))
+# Print all env vars for debugging (masks password)
+print("=" * 50)
+print("🔍 Environment Variables Detected:")
+print(f"   MYSQL_URL:    {'SET ✅' if os.environ.get('MYSQL_URL') else 'NOT SET ❌'}")
+print(f"   DATABASE_URL: {'SET ✅' if os.environ.get('DATABASE_URL') else 'NOT SET ❌'}")
+print(f"   DB_HOST:      {os.environ.get('DB_HOST', 'NOT SET')}")
+print(f"   DB_PORT:      {os.environ.get('DB_PORT', 'NOT SET')}")
+print(f"   DB_USER:      {os.environ.get('DB_USER', 'NOT SET')}")
+print(f"   DB_NAME:      {os.environ.get('DB_NAME', 'NOT SET')}")
+print(f"   DB_PASSWORD:  {'SET ✅' if os.environ.get('DB_PASSWORD') or os.environ.get('Password') else 'NOT SET ❌'}")
+print("=" * 50)
+
+# Priority 1: MYSQL_URL or DATABASE_URL (full connection string)
+DATABASE_URL = os.environ.get('MYSQL_URL') or os.environ.get('DATABASE_URL') or ''
 
 if DATABASE_URL:
-    # Parse Railway MySQL URL
-    # Format: mysql://user:password@host:port/database
     match = re.match(r'mysql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)', DATABASE_URL)
     if match:
         DB_CONFIG = {
@@ -36,27 +52,40 @@ if DATABASE_URL:
             'password': match.group(2),
             'database': match.group(5)
         }
-        print(f"✅ Using Railway MySQL: {match.group(3)}:{match.group(4)}/{match.group(5)}")
+        print(f"✅ Using MYSQL_URL → {match.group(3)}:{match.group(4)}/{match.group(5)}")
     else:
-        # Fallback for other URL formats
+        print(f"❌ MYSQL_URL found but could not be parsed: {DATABASE_URL[:30]}...")
+        DATABASE_URL = ''  # Force fallback
+
+# Priority 2: Individual DB_* environment variables
+if not DATABASE_URL:
+    db_host = os.environ.get('DB_HOST')
+    db_port = os.environ.get('DB_PORT')
+    db_user = os.environ.get('DB_USER')
+    db_name = os.environ.get('DB_NAME')
+    # Support both 'DB_PASSWORD' and 'Password' variable names
+    db_password = os.environ.get('DB_PASSWORD') or os.environ.get('Password') or ''
+
+    if db_host and db_user and db_name:
         DB_CONFIG = {
-            'host': os.environ.get('DB_HOST', 'localhost'),
-            'port': int(os.environ.get('DB_PORT', 3306)),
-            'user': os.environ.get('DB_USER', 'root'),
-            'password': os.environ.get('DB_PASSWORD', ''),
-            'database': os.environ.get('DB_NAME', 'queue_management_system')
+            'host': db_host,
+            'port': int(db_port) if db_port else 3306,
+            'user': db_user,
+            'password': db_password,
+            'database': db_name
         }
-        print("✅ Using environment variable database config")
-else:
-    # Local development
-    DB_CONFIG = {
-        'host': 'localhost',
-        'port': 3306,
-        'user': 'root',
-        'password': '',
-        'database': 'queue_management_system'
-    }
-    print("✅ Using local database config")
+        print(f"✅ Using individual DB vars → {db_host}/{db_name}")
+
+    else:
+        # Priority 3: Local development fallback
+        DB_CONFIG = {
+            'host': 'localhost',
+            'port': 3306,
+            'user': 'root',
+            'password': '',
+            'database': 'queue_management_system'
+        }
+        print("⚠️  No DB config found in environment — using LOCAL database config")
 
 # ============================================
 # SERVE HTML PAGES
@@ -90,20 +119,20 @@ def execute_query(query, params=None, fetch_one=False, fetch_all=False, commit=F
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        
+
         cursor.execute(query, params or ())
-        
+
         if fetch_one:
             result = cursor.fetchone()
         elif fetch_all:
             result = cursor.fetchall()
         else:
             result = None
-        
+
         if commit:
             conn.commit()
             result = cursor.lastrowid
-        
+
         return result
     except Exception as e:
         if conn and commit:
@@ -132,11 +161,13 @@ def health_check():
         db_status = "connected"
     except Exception as e:
         print(f"Health check DB error: {e}")
-        db_status = "disconnected"
-    
+        db_status = f"disconnected: {str(e)}"
+
     return jsonify({
         'status': 'ok',
         'database': db_status,
+        'db_host': DB_CONFIG.get('host'),
+        'db_name': DB_CONFIG.get('database'),
         'timestamp': datetime.now().isoformat()
     })
 
@@ -147,51 +178,51 @@ def health_check():
 @app.route('/api/tokens', methods=['POST'])
 def generate_token():
     data = request.get_json()
-    
+
     service_category = data.get('service_category')
     customer_name = data.get('customer_name')
     customer_phone = data.get('customer_phone')
     source = data.get('source', 'form')
-    
+
     if not service_category:
         return jsonify({'success': False, 'message': 'Service category is required'}), 400
-    
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
         cursor.execute("""
             SELECT category_name, estimated_service_time, prefix, next_number
             FROM service_categories 
             WHERE category_code = %s AND is_active = 1
         """, (service_category,))
-        
+
         service = cursor.fetchone()
-        
+
         if not service:
             return jsonify({'success': False, 'message': 'Invalid service category'}), 400
-        
+
         next_num = service['next_number']
         token_number = f"{service['prefix']}{str(next_num).zfill(3)}"
-        
+
         cursor.execute("""
             UPDATE service_categories 
             SET next_number = next_number + 1
             WHERE category_code = %s
         """, (service_category,))
-        
+
         cursor.execute("""
             SELECT COUNT(*) as ahead_count
             FROM queue_tokens
             WHERE service_category = %s
             AND status IN ('waiting', 'called')
         """, (service_category,))
-        
+
         ahead = cursor.fetchone()
         ahead_count = ahead['ahead_count'] if ahead else 0
         estimated_wait = ahead_count * service['estimated_service_time']
         queue_position = ahead_count + 1
-        
+
         cursor.execute("""
             INSERT INTO queue_tokens (
                 token_number, service_category, customer_name, customer_phone, 
@@ -201,9 +232,9 @@ def generate_token():
             token_number, service_category, customer_name,
             customer_phone, 'waiting', queue_position, estimated_wait, source
         ))
-        
+
         conn.commit()
-        
+
         return jsonify({
             'success': True,
             'token_number': token_number,
@@ -213,7 +244,7 @@ def generate_token():
             'estimated_wait': estimated_wait,
             'message': 'Token generated successfully'
         })
-        
+
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -230,19 +261,19 @@ def get_queue_position(token_number):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        
+
         cursor.execute("""
             SELECT q.*, t.teller_number as assigned_teller
             FROM queue_tokens q
             LEFT JOIN tellers t ON q.assigned_teller_id = t.id
             WHERE q.token_number = %s
         """, (token_number,))
-        
+
         token = cursor.fetchone()
-        
+
         if not token:
             return jsonify({'success': False, 'message': 'Token not found'}), 404
-        
+
         cursor.execute("""
             SELECT COUNT(*) as ahead_count
             FROM queue_tokens
@@ -250,13 +281,13 @@ def get_queue_position(token_number):
             AND status IN ('waiting', 'called')
             AND requested_at < %s
         """, (token['service_category'], token['requested_at']))
-        
+
         ahead = cursor.fetchone()
         ahead_count = ahead['ahead_count'] if ahead else 0
-        
+
         cursor.close()
         conn.close()
-        
+
         return jsonify({
             'success': True,
             'token_number': token['token_number'],
@@ -264,7 +295,7 @@ def get_queue_position(token_number):
             'queue_position': ahead_count + 1,
             'ahead_count': ahead_count
         })
-        
+
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -277,7 +308,7 @@ def get_current_queue():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        
+
         cursor.execute("""
             SELECT 
                 sc.category_code,
@@ -291,17 +322,17 @@ def get_current_queue():
             GROUP BY sc.category_code, sc.category_name
             ORDER BY sc.display_order
         """)
-        
+
         queue_data = cursor.fetchall()
         cursor.close()
         conn.close()
-        
+
         return jsonify({
             'success': True,
             'queue': queue_data,
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -314,7 +345,7 @@ def get_waiting_list(service_category):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        
+
         cursor.execute("""
             SELECT 
                 token_number,
@@ -327,17 +358,17 @@ def get_waiting_list(service_category):
             AND status = 'waiting'
             ORDER BY requested_at ASC
         """, (service_category,))
-        
+
         waiting_tokens = cursor.fetchall()
         cursor.close()
         conn.close()
-        
+
         return jsonify({
             'success': True,
             'waiting_tokens': waiting_tokens,
             'count': len(waiting_tokens)
         })
-        
+
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -350,7 +381,7 @@ def get_tellers():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        
+
         cursor.execute("""
             SELECT 
                 id, teller_number, teller_name, status,
@@ -359,16 +390,16 @@ def get_tellers():
             FROM tellers
             ORDER BY teller_number
         """)
-        
+
         tellers = cursor.fetchall()
         cursor.close()
         conn.close()
-        
+
         return jsonify({
             'success': True,
             'tellers': tellers
         })
-        
+
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -379,25 +410,25 @@ def get_tellers():
 @app.route('/api/tellers/login', methods=['POST'])
 def teller_login():
     data = request.get_json()
-    
+
     teller_number = data.get('teller_number')
     pin_code = data.get('pin_code')
-    
+
     if not teller_number or not pin_code:
         return jsonify({'success': False, 'message': 'Teller number and PIN required'}), 400
-    
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
         cursor.execute("""
             SELECT id, teller_number, teller_name, serving_category, status
             FROM tellers
             WHERE teller_number = %s AND pin_code = %s
         """, (teller_number, pin_code))
-        
+
         teller = cursor.fetchone()
-        
+
         if teller:
             return jsonify({
                 'success': True,
@@ -409,7 +440,7 @@ def teller_login():
                 'success': False,
                 'message': 'Invalid teller number or PIN'
             }), 401
-            
+
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
     finally:
@@ -423,29 +454,29 @@ def teller_login():
 @app.route('/api/tellers/call-specific', methods=['POST'])
 def call_specific_customer():
     data = request.get_json()
-    
+
     teller_id = data.get('teller_id')
     teller_number = data.get('teller_number')
     token_number = data.get('token_number')
-    
+
     if not all([teller_id, teller_number, token_number]):
         return jsonify({'success': False, 'message': 'Missing required fields'}), 400
-    
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
         cursor.execute("""
             SELECT id, token_number, customer_name
             FROM queue_tokens
             WHERE token_number = %s AND status = 'waiting'
         """, (token_number,))
-        
+
         token = cursor.fetchone()
-        
+
         if not token:
             return jsonify({'success': False, 'message': 'Token not found or already called'}), 404
-        
+
         cursor.execute("""
             UPDATE queue_tokens 
             SET status = 'called', 
@@ -454,7 +485,7 @@ def call_specific_customer():
                 assigned_teller_number = %s
             WHERE id = %s
         """, (teller_id, teller_number, token['id']))
-        
+
         cursor.execute("""
             UPDATE tellers 
             SET status = 'called',
@@ -462,16 +493,16 @@ def call_specific_customer():
                 last_activity = NOW()
             WHERE id = %s
         """, (token_number, teller_id))
-        
+
         conn.commit()
-        
+
         return jsonify({
             'success': True,
             'token_number': token_number,
             'teller_number': teller_number,
             'message': f"Customer {token_number} has been called"
         })
-        
+
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -486,16 +517,16 @@ def call_specific_customer():
 @app.route('/api/tellers/serve', methods=['POST'])
 def serve_customer():
     data = request.get_json()
-    
+
     teller_id = data.get('teller_id')
     token_number = data.get('token_number')
-    
+
     if not all([teller_id, token_number]):
         return jsonify({'success': False, 'message': 'Missing required fields'}), 400
-    
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
         cursor.execute("""
             UPDATE queue_tokens 
@@ -503,22 +534,22 @@ def serve_customer():
                 serving_started_at = NOW()
             WHERE token_number = %s
         """, (token_number,))
-        
+
         cursor.execute("""
             UPDATE tellers 
             SET status = 'busy',
                 last_activity = NOW()
             WHERE id = %s
         """, (teller_id,))
-        
+
         conn.commit()
-        
+
         return jsonify({
             'success': True,
             'token_number': token_number,
             'message': f"Customer {token_number} is now being served"
         })
-        
+
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -533,16 +564,16 @@ def serve_customer():
 @app.route('/api/tellers/complete', methods=['POST'])
 def complete_service():
     data = request.get_json()
-    
+
     teller_id = data.get('teller_id')
     token_number = data.get('token_number')
-    
+
     if not all([teller_id, token_number]):
         return jsonify({'success': False, 'message': 'Missing required fields'}), 400
-    
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
         cursor.execute("""
             UPDATE queue_tokens 
@@ -550,7 +581,7 @@ def complete_service():
                 completed_at = NOW()
             WHERE token_number = %s
         """, (token_number,))
-        
+
         cursor.execute("""
             UPDATE tellers 
             SET status = 'available',
@@ -558,15 +589,15 @@ def complete_service():
                 last_activity = NOW()
             WHERE id = %s
         """, (teller_id,))
-        
+
         conn.commit()
-        
+
         return jsonify({
             'success': True,
             'token_number': token_number,
             'message': f"Service completed for {token_number}"
         })
-        
+
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -581,16 +612,16 @@ def complete_service():
 @app.route('/api/tellers/skip', methods=['POST'])
 def skip_customer():
     data = request.get_json()
-    
+
     teller_id = data.get('teller_id')
     token_number = data.get('token_number')
-    
+
     if not all([teller_id, token_number]):
         return jsonify({'success': False, 'message': 'Missing required fields'}), 400
-    
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
         cursor.execute("""
             UPDATE queue_tokens 
@@ -598,7 +629,7 @@ def skip_customer():
                 skipped_at = NOW()
             WHERE token_number = %s
         """, (token_number,))
-        
+
         cursor.execute("""
             UPDATE tellers 
             SET status = 'available',
@@ -606,15 +637,15 @@ def skip_customer():
                 last_activity = NOW()
             WHERE id = %s
         """, (teller_id,))
-        
+
         conn.commit()
-        
+
         return jsonify({
             'success': True,
             'token_number': token_number,
             'message': f"Customer {token_number} has been skipped"
         })
-        
+
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -629,16 +660,16 @@ def skip_customer():
 @app.route('/api/tellers/recall', methods=['POST'])
 def recall_customer():
     data = request.get_json()
-    
+
     teller_id = data.get('teller_id')
     token_number = data.get('token_number')
-    
+
     if not all([teller_id, token_number]):
         return jsonify({'success': False, 'message': 'Missing required fields'}), 400
-    
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
         cursor.execute("""
             SELECT q.status, q.token_number, t.teller_number
@@ -646,19 +677,19 @@ def recall_customer():
             LEFT JOIN tellers t ON q.assigned_teller_id = t.id
             WHERE q.token_number = %s
         """, (token_number,))
-        
+
         token = cursor.fetchone()
-        
+
         if not token:
             return jsonify({'success': False, 'message': 'Token not found'}), 404
-        
+
         cursor.execute("""
             INSERT INTO queue_logs (token_number, teller_id, action, action_details, created_at)
             VALUES (%s, %s, 'recall', 'Recall announcement requested', NOW())
         """, (token_number, teller_id))
-        
+
         conn.commit()
-        
+
         return jsonify({
             'success': True,
             'token_number': token_number,
@@ -666,7 +697,7 @@ def recall_customer():
             'status': token['status'],
             'message': f"Recall announcement for {token_number}"
         })
-        
+
     except Exception as e:
         conn.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -683,7 +714,7 @@ def get_recent_recalls():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
-        
+
         cursor.execute("""
             SELECT token_number, teller_id, created_at
             FROM queue_logs
@@ -692,16 +723,16 @@ def get_recent_recalls():
             ORDER BY created_at DESC
             LIMIT 5
         """)
-        
+
         recalls = cursor.fetchall()
         cursor.close()
         conn.close()
-        
+
         return jsonify({
             'success': True,
             'recalls': recalls
         })
-        
+
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -712,18 +743,18 @@ def get_recent_recalls():
 @app.route('/api/tellers', methods=['POST'])
 def add_teller():
     data = request.get_json()
-    
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
         cursor.execute("""
             INSERT INTO tellers (teller_number, teller_name, email, phone, serving_category, pin_code, status)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (data['teller_number'], data['teller_name'], data.get('email'), 
+        """, (data['teller_number'], data['teller_name'], data.get('email'),
               data.get('phone'), data['serving_category'], data.get('pin_code', '1234'), 'available'))
         conn.commit()
-        
+
         return jsonify({'success': True, 'message': 'Teller added successfully'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -734,19 +765,19 @@ def add_teller():
 @app.route('/api/tellers/<int:teller_id>', methods=['PUT'])
 def update_teller(teller_id):
     data = request.get_json()
-    
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
         cursor.execute("""
             UPDATE tellers 
             SET teller_number = %s, teller_name = %s, email = %s, phone = %s, serving_category = %s
             WHERE id = %s
-        """, (data['teller_number'], data['teller_name'], data.get('email'), 
+        """, (data['teller_number'], data['teller_name'], data.get('email'),
               data.get('phone'), data['serving_category'], teller_id))
         conn.commit()
-        
+
         return jsonify({'success': True, 'message': 'Teller updated successfully'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -758,11 +789,11 @@ def update_teller(teller_id):
 def delete_teller(teller_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
         cursor.execute("DELETE FROM tellers WHERE id = %s", (teller_id,))
         conn.commit()
-        
+
         return jsonify({'success': True, 'message': 'Teller deleted successfully'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -773,15 +804,15 @@ def delete_teller(teller_id):
 @app.route('/api/tellers/<int:teller_id>/reset-pin', methods=['POST'])
 def reset_teller_pin(teller_id):
     data = request.get_json()
-    
+
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    
+
     try:
-        cursor.execute("UPDATE tellers SET pin_code = %s WHERE id = %s", 
-                      (data['pin_code'], teller_id))
+        cursor.execute("UPDATE tellers SET pin_code = %s WHERE id = %s",
+                       (data['pin_code'], teller_id))
         conn.commit()
-        
+
         return jsonify({'success': True, 'message': 'PIN reset successfully'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -793,38 +824,16 @@ def reset_teller_pin(teller_id):
 # RUN THE APPLICATION
 # ============================================
 
-
-# At the bottom of app.py
 if __name__ == '__main__':
-    # Railway provides the PORT, fallback to 8080 for local testing
     PORT = int(os.environ.get('PORT', 5000))
-    
+
     print("=" * 50)
     print("🚀 Queue Management System API (Flask)")
     print("=" * 50)
-    print(f"📍 API URL: http://localhost:{PORT}")
-    print(f"📖 Endpoints:")
-    print(f"   GET  /api/health")
-    print(f"   POST /api/tokens")
-    print(f"   GET  /api/queue/position/<token>")
-    print(f"   GET  /api/queue/current")
-    print(f"   GET  /api/queue/waiting-list/<service>")
-    print(f"   GET  /api/tellers")
-    print(f"   POST /api/tellers/login")
-    print(f"   POST /api/tellers")
-    print(f"   PUT  /api/tellers/<id>")
-    print(f"   DELETE /api/tellers/<id>")
-    print(f"   POST /api/tellers/<id>/reset-pin")
-    print(f"   POST /api/tellers/call-specific")
-    print(f"   POST /api/tellers/serve")
-    print(f"   POST /api/tellers/complete")
-    print(f"   POST /api/tellers/skip")
-    print(f"   POST /api/tellers/recall")
-    print(f"   GET  /api/queue/recent-recalls")
+    print(f"📍 Running on port: {PORT}")
+    print(f"🗄️  DB Host: {DB_CONFIG.get('host')}")
+    print(f"🗄️  DB Name: {DB_CONFIG.get('database')}")
+    print(f"🗄️  DB User: {DB_CONFIG.get('user')}")
     print("=" * 50)
-    print()
-    print(f"🌐 Access the system at: http://localhost:{PORT}")
-    print("=" * 50)
-    
-    # debug=False for production
+
     app.run(host='0.0.0.0', port=PORT, debug=False)
