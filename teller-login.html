@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teller Login - Queue Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .bank-logo {
+            font-size: 60px;
+            margin-bottom: 10px;
+        }
+
+        .bank-name {
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .tagline {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
+
+        .login-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e3c72;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #00c853, #00e676);
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px rgba(0,200,83,0.3);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #f44336;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #00c853;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            margin-top: 30px;
+        }
+
+        .server-status {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+
+        .server-online {
+            color: #00ff88;
+        }
+
+        .server-offline {
+            color: #ff4444;
+        }
+
+        .pin-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .pin-btn {
+            background: #f0f2f5;
+            border: 2px solid #e0e0e0;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pin-btn:hover {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .pin-clear {
+            background: #ff9800;
+            color: white;
+            border-color: #ff9800;
+        }
+
+        .pin-clear:hover {
+            background: #f44336;
+            border-color: #f44336;
+        }
+
+        .pin-display {
+            text-align: center;
+            margin: 15px 0;
+            font-size: 32px;
+            letter-spacing: 10px;
+            font-family: monospace;
+            color: #1e3c72;
+        }
+
+        .toggle-pin {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .toggle-pin a {
+            color: #3498db;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="header">
+            <div class="bank-logo">🏦</div>
+            <div class="bank-name">FIRST COMMUNITY BANK</div>
+            <div class="tagline">Teller Login Portal</div>
+        </div>
+
+        <div class="login-card">
+            <div class="login-title">🔐 Teller Login</div>
+            
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Teller Number</label>
+                    <input type="number" class="form-input" id="tellerNumber" placeholder="Enter your teller number" required autofocus>
+                </div>
+
+                <div class="form-group" id="pinInputGroup">
+                    <label class="form-label">PIN Code</label>
+                    <input type="password" class="form-input" id="pinCode" placeholder="Enter 4-digit PIN" maxlength="4" required>
+                </div>
+
+                <button type="submit" class="login-btn" id="loginBtn">
+                    🔓 LOGIN
+                </button>
+            </form>
+
+            <div class="server-status" id="serverStatus">
+                🔌 Checking server connection...
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2024 First Community Bank | Queue Management System</p>
+            <p>Contact administrator if you forgot your PIN</p>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const API_BASE_URL = "http://127.0.0.1:5000";
+        
+        // ============================================
+        // CHECK SERVER CONNECTION
+        // ============================================
+        async function checkServer() {
+            const statusDiv = document.getElementById('serverStatus');
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/health`);
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'ok') {
+                    statusDiv.innerHTML = '🟢 Server Online - Ready to login';
+                    statusDiv.className = 'server-status server-online';
+                    return true;
+                } else {
+                    statusDiv.innerHTML = '🔴 Server error - Please contact administrator';
+                    statusDiv.className = 'server-status server-offline';
+                    return false;
+                }
+            } catch (error) {
+                console.error('Server check error:', error);
+                statusDiv.innerHTML = '🔴 Cannot connect to server. Make sure Flask is running on port 5000';
+                statusDiv.className = 'server-status server-offline';
+                return false;
+            }
+        }
+        
+        // ============================================
+        // LOGIN FUNCTION - Using API Endpoint
+        // ============================================
+        async function login(event) {
+            event.preventDefault();
+            
+            const tellerNumber = document.getElementById('tellerNumber').value;
+            const pinCode = document.getElementById('pinCode').value;
+            
+            // Clear previous messages
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            
+            if (!tellerNumber || !pinCode) {
+                showError('Please enter teller number and PIN');
+                return;
+            }
+            
+            if (pinCode.length < 4) {
+                showError('PIN must be 4 digits');
+                return;
+            }
+            
+            const loginBtn = document.getElementById('loginBtn');
+            loginBtn.innerHTML = 'Verifying... <span class="loading"></span>';
+            loginBtn.disabled = true;
+            
+            try {
+                // Call the login API endpoint
+                const response = await fetch(`${API_BASE_URL}/api/tellers/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        teller_number: parseInt(tellerNumber),
+                        pin_code: pinCode
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Store logged in teller in session
+                    const loggedInTeller = {
+                        id: result.teller.id,
+                        teller_number: result.teller.teller_number,
+                        teller_name: result.teller.teller_name,
+                        name: result.teller.teller_name,
+                        serving_category: result.teller.serving_category,
+                        serviceCategory: result.teller.serving_category,
+                        email: result.teller.email,
+                        phone: result.teller.phone,
+                        status: result.teller.status
+                    };
+                    
+                    sessionStorage.setItem('loggedInTeller', JSON.stringify(loggedInTeller));
+                    
+                    console.log('Session stored:', loggedInTeller);
+                    
+                    showSuccess('Login successful! Redirecting...');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'teller-dashboard.html';
+                    }, 1000);
+                } else {
+                    showError(result.message || 'Invalid teller number or PIN');
+                    loginBtn.innerHTML = '🔓 LOGIN';
+                    loginBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('Network error. Please check if server is running on port 5000');
+                loginBtn.innerHTML = '🔓 LOGIN';
+                loginBtn.disabled = false;
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+        
+        // ============================================
+        // PIN PAD (Optional - for touch screens)
+        // ============================================
+        function addPinPad() {
+            const pinGroup = document.getElementById('pinInputGroup');
+            const pinInput = document.getElementById('pinCode');
+            
+            const pinPad = document.createElement('div');
+            pinPad.className = 'pin-grid';
+            pinPad.innerHTML = `
+                <button type="button" class="pin-btn" onclick="addPinDigit(1)">1</button>
+                <button type="button" class="pin-btn" onclick="addPinDigit(2)">2</button>
+                <button type="button" class="pin-btn" onclick="addPinDigit(3)">3</button>
+                <button type="button" class="pin-btn" onclick="addPinDigit(4)">4</button>
+                <button type="button" class="pin-btn" onclick="addPinDigit(5)">5</button>
+                <button type="button" class="pin-btn" onclick="addPinDigit(6)">6</button>
+                <button type="button" class="pin-btn" onclick="addPinDigit(7)">7</button>
+                <button type="button" class="pin-btn" onclick="addPinDigit(8)">8</button>
+                <button type="button" class="pin-btn" onclick="addPinDigit(9)">9</button>
+                <button type="button" class="pin-btn" onclick="addPinDigit(0)">0</button>
+                <button type="button" class="pin-btn pin-clear" onclick="clearPinDigit()">C</button>
+                <button type="button" class="pin-btn" onclick="deletePinDigit()">⌫</button>
+            `;
+            
+            pinGroup.appendChild(pinPad);
+            
+            const pinDisplay = document.createElement('div');
+            pinDisplay.className = 'pin-display';
+            pinDisplay.id = 'pinDisplay';
+            pinDisplay.innerHTML = '____';
+            pinGroup.insertBefore(pinDisplay, pinPad);
+            
+            const toggleDiv = document.createElement('div');
+            toggleDiv.className = 'toggle-pin';
+            toggleDiv.innerHTML = '<a onclick="togglePinInput()">Use keyboard input instead</a>';
+            pinGroup.appendChild(toggleDiv);
+        }
+        
+        function addPinDigit(digit) {
+            const pinInput = document.getElementById('pinCode');
+            if (pinInput.value.length < 4) {
+                pinInput.value += digit;
+                updatePinDisplay();
+            }
+        }
+        
+        function clearPinDigit() {
+            const pinInput = document.getElementById('pinCode');
+            pinInput.value = '';
+            updatePinDisplay();
+        }
+        
+        function deletePinDigit() {
+            const pinInput = document.getElementById('pinCode');
+            pinInput.value = pinInput.value.slice(0, -1);
+            updatePinDisplay();
+        }
+        
+        function updatePinDisplay() {
+            const pinInput = document.getElementById('pinCode');
+            const pinDisplay = document.getElementById('pinDisplay');
+            if (pinDisplay) {
+                const displayValue = '●'.repeat(pinInput.value.length) + '○'.repeat(4 - pinInput.value.length);
+                pinDisplay.innerHTML = displayValue;
+            }
+        }
+        
+        let usePinPad = true;
+        
+        function togglePinInput() {
+            const pinInput = document.getElementById('pinCode');
+            const pinDisplay = document.getElementById('pinDisplay');
+            const pinPad = document.querySelector('.pin-grid');
+            const toggleLink = document.querySelector('.toggle-pin a');
+            
+            if (usePinPad) {
+                pinInput.type = 'password';
+                pinInput.style.display = 'block';
+                if (pinDisplay) pinDisplay.style.display = 'none';
+                if (pinPad) pinPad.style.display = 'none';
+                toggleLink.textContent = 'Use PIN pad instead';
+                usePinPad = false;
+            } else {
+                pinInput.type = 'text';
+                pinInput.style.display = 'none';
+                if (pinDisplay) pinDisplay.style.display = 'block';
+                if (pinPad) pinPad.style.display = 'grid';
+                toggleLink.textContent = 'Use keyboard input instead';
+                usePinPad = true;
+            }
+        }
+        
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        document.getElementById('loginForm').addEventListener('submit', login);
+        
+        // Check if already logged in
+        if (sessionStorage.getItem('loggedInTeller')) {
+            window.location.href = 'teller-dashboard.html';
+        }
+        
+        // Check server connection on load
+        checkServer();
+        
+        // Add PIN pad for touch screens (optional)
+        if ('ontouchstart' in window) {
+            addPinPad();
+            document.getElementById('pinCode').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

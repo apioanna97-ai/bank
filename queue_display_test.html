@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Bank Queue System - Get Your Token</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .bank-logo {
+            font-size: 60px;
+            margin-bottom: 10px;
+        }
+
+        .bank-name {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .tagline {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e3c72;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .service-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .service-card:hover {
+            transform: translateY(-3px);
+            border-color: #3498db;
+            background: #f0f8ff;
+        }
+
+        .service-card.selected {
+            border-color: #00c853;
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            box-shadow: 0 5px 15px rgba(0,200,83,0.2);
+        }
+
+        .service-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .service-code {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .service-name {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52,152,219,0.1);
+        }
+
+        .get-token-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #00c853, #00e676);
+            color: white;
+            border: none;
+            padding: 18px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .get-token-btn:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px rgba(0,200,83,0.3);
+        }
+
+        .get-token-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .token-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .token-label {
+            font-size: 14px;
+            opacity: 0.9;
+            letter-spacing: 2px;
+        }
+
+        .token-number {
+            font-size: 64px;
+            font-weight: bold;
+            letter-spacing: 10px;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+
+        .token-info {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .info-label {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .queue-update {
+            background: rgba(255,255,255,0.15);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .queue-position {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        .wait-time {
+            font-size: 18px;
+            margin-top: 5px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .loading-spinner {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            margin-top: 20px;
+        }
+
+        .new-token-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .status-waiting {
+            background: #ff9800;
+            color: white;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .token-animation {
+            animation: bounce 0.5s ease;
+        }
+
+        @media (max-width: 480px) {
+            .service-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .token-number {
+                font-size: 40px;
+                letter-spacing: 5px;
+            }
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="bank-logo">🏦</div>
+            <div class="bank-name">FIRST COMMUNITY BANK</div>
+            <div class="tagline">Your Trusted Banking Partner</div>
+        </div>
+
+        <div class="card" id="mainCard">
+            <div class="section-title">
+                <span>📋</span> Select Service Type
+            </div>
+
+            <div class="service-grid" id="serviceGrid">
+                <div class="service-card" data-service="W" data-name="Withdrawal">
+                    <div class="service-icon">💰</div>
+                    <div class="service-code">W</div>
+                    <div class="service-name">Withdrawal</div>
+                </div>
+                <div class="service-card" data-service="L" data-name="Loan">
+                    <div class="service-icon">🤝</div>
+                    <div class="service-code">L</div>
+                    <div class="service-name">Loan Application</div>
+                </div>
+                <div class="service-card" data-service="D" data-name="Deposit">
+                    <div class="service-icon">🐷</div>
+                    <div class="service-code">D</div>
+                    <div class="service-name">Deposit</div>
+                </div>
+                <div class="service-card" data-service="C" data-name="Account">
+                    <div class="service-icon">👤</div>
+                    <div class="service-code">C</div>
+                    <div class="service-name">Account Opening</div>
+                </div>
+                <div class="service-card" data-service="T" data-name="Cheque">
+                    <div class="service-icon">📄</div>
+                    <div class="service-code">T</div>
+                    <div class="service-name">Cheque Processing</div>
+                </div>
+                <div class="service-card" data-service="E" data-name="Enquiry">
+                    <div class="service-icon">❓</div>
+                    <div class="service-code">E</div>
+                    <div class="service-name">Enquiries</div>
+                </div>
+            </div>
+
+            <div class="section-title">
+                <span>👤</span> Your Information (Optional)
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-input" id="customerName" placeholder="Enter your full name">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input type="tel" class="form-input" id="customerPhone" placeholder="e.g., 0712345678">
+            </div>
+
+            <button class="get-token-btn" id="getTokenBtn" disabled>
+                📱 GET QUEUE TOKEN
+            </button>
+
+            <div id="tokenDisplay" style="display: none;"></div>
+        </div>
+
+        <div id="newTokenSection" style="display: none;">
+            <button class="new-token-btn" id="newTokenBtn">
+                🔄 Generate Another Token
+            </button>
+        </div>
+
+        <div class="footer">
+            <p>© 2024 First Community Bank | Queue Management System</p>
+            <p>📍 Main Branch | 🕐 Mon-Fri 8:00 AM - 5:00 PM</p>
+            <p id="apiStatus">🔌 Connecting to server...</p>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Generating your token...</p>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION - Connect to Flask Backend
+        // ============================================
+        const API_BASE_URL = "http://127.0.0.1:5000";
+        
+        let selectedService = null;
+        let tokenInterval = null;
+        let currentToken = null;
+        
+        // ============================================
+        // CHECK API CONNECTION
+        // ============================================
+        async function checkApiConnection() {
+            const statusEl = document.getElementById('apiStatus');
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/health`);
+                const data = await response.json();
+                if (data.status === 'ok') {
+                    statusEl.innerHTML = '✅ Connected to server';
+                    statusEl.style.color = '#00ff88';
+                } else {
+                    statusEl.innerHTML = '⚠️ Server connection issue';
+                    statusEl.style.color = '#ffaa00';
+                }
+            } catch (error) {
+                console.error('API connection error:', error);
+                statusEl.innerHTML = '❌ Cannot connect to server. Make sure Flask is running on port 5000';
+                statusEl.style.color = '#ff4444';
+                showToast('Cannot connect to server. Please ensure Flask backend is running.', 'error');
+            }
+        }
+        
+        // ============================================
+        // SERVICE SELECTION
+        // ============================================
+        document.querySelectorAll('.service-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                
+                selectedService = {
+                    code: card.dataset.service,
+                    name: card.dataset.name
+                };
+                
+                document.getElementById('getTokenBtn').disabled = false;
+                document.getElementById('getTokenBtn').innerHTML = `📱 GET ${selectedService.name.toUpperCase()} TOKEN`;
+            });
+        });
+        
+        // ============================================
+        // GENERATE TOKEN VIA API
+        // ============================================
+        async function getToken() {
+            if (!selectedService) {
+                showToast('Please select a service type', 'error');
+                return;
+            }
+            
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+            
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/tokens`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        service_category: selectedService.code,
+                        customer_name: customerName || null,
+                        customer_phone: customerPhone || null,
+                        source: 'form'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayToken(data);
+                    startQueuePolling(data.token_number);
+                    showToast(`Token ${data.token_number} generated successfully!`, 'success');
+                    document.getElementById('newTokenSection').style.display = 'block';
+                } else {
+                    showToast(data.message || 'Failed to generate token', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Network error. Make sure Flask backend is running on port 5000', 'error');
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+        
+        // ============================================
+        // DISPLAY TOKEN
+        // ============================================
+        function displayToken(data) {
+            const tokenDisplay = document.getElementById('tokenDisplay');
+            currentToken = data.token_number;
+            
+            tokenDisplay.innerHTML = `
+                <div class="token-display token-animation">
+                    <div class="token-label">YOUR QUEUE TOKEN</div>
+                    <div class="token-number">${data.token_number}</div>
+                    <div class="token-info">
+                        <div class="info-item">
+                            <div class="info-value">${data.service_name}</div>
+                            <div class="info-label">Service</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-value" id="queuePosition">${data.queue_position}</div>
+                            <div class="info-label">Position</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-value" id="estimatedWait">${data.estimated_wait || 0}</div>
+                            <div class="info-label">Est. Wait (min)</div>
+                        </div>
+                    </div>
+                    <div class="queue-update">
+                        <div>👥 Customers ahead of you:</div>
+                        <div class="queue-position" id="aheadCount">${data.ahead_count || 0}</div>
+                        <div class="wait-time" id="waitTimeMsg">
+                            ${data.ahead_count === 0 ? '🟢 You are next!' : `⏱️ Estimated wait: ${data.estimated_wait || 0} minutes`}
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; font-size: 12px; opacity: 0.8;">
+                        📱 Please keep this token number. Watch the TV screen for your turn.
+                    </div>
+                </div>
+            `;
+            
+            tokenDisplay.style.display = 'block';
+            
+            document.getElementById('getTokenBtn').disabled = true;
+            document.getElementById('getTokenBtn').innerHTML = '✅ TOKEN GENERATED';
+            
+            document.querySelectorAll('.service-card').forEach(card => {
+                card.style.opacity = '0.5';
+                card.style.pointerEvents = 'none';
+            });
+            
+            document.getElementById('customerName').disabled = true;
+            document.getElementById('customerPhone').disabled = true;
+        }
+        
+        // ============================================
+        // POLL QUEUE POSITION
+        // ============================================
+        function startQueuePolling(tokenNumber) {
+            if (tokenInterval) clearInterval(tokenInterval);
+            
+            tokenInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/queue/position/${tokenNumber}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        const positionElem = document.getElementById('queuePosition');
+                        const aheadElem = document.getElementById('aheadCount');
+                        const waitMsgElem = document.getElementById('waitTimeMsg');
+                        
+                        if (positionElem) positionElem.textContent = data.queue_position;
+                        if (aheadElem) aheadElem.textContent = data.ahead_count;
+                        
+                        if (waitMsgElem) {
+                            if (data.ahead_count === 0 && data.status === 'waiting') {
+                                waitMsgElem.innerHTML = '🟢 You are next! Please watch the screen.';
+                                waitMsgElem.style.color = '#ffd700';
+                            } else if (data.status === 'called') {
+                                waitMsgElem.innerHTML = '🔔 Your token has been called! Please proceed to the teller.';
+                                waitMsgElem.style.color = '#ff9800';
+                                playNotificationSound();
+                            } else if (data.status === 'serving') {
+                                waitMsgElem.innerHTML = '🟢 You are now being served!';
+                                waitMsgElem.style.color = '#00ff88';
+                            } else {
+                                waitMsgElem.innerHTML = `⏱️ Estimated wait: ${data.estimated_wait} minutes`;
+                                waitMsgElem.style.color = 'white';
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            }, 5000);
+        }
+        
+        // ============================================
+        // RESET FOR NEW TOKEN
+        // ============================================
+        function resetForNewToken() {
+            document.getElementById('tokenDisplay').style.display = 'none';
+            document.getElementById('tokenDisplay').innerHTML = '';
+            
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('customerName').disabled = false;
+            document.getElementById('customerPhone').disabled = false;
+            
+            selectedService = null;
+            document.querySelectorAll('.service-card').forEach(card => {
+                card.classList.remove('selected');
+                card.style.opacity = '1';
+                card.style.pointerEvents = 'auto';
+            });
+            
+            document.getElementById('getTokenBtn').disabled = true;
+            document.getElementById('getTokenBtn').innerHTML = '📱 GET QUEUE TOKEN';
+            document.getElementById('newTokenSection').style.display = 'none';
+            
+            if (tokenInterval) {
+                clearInterval(tokenInterval);
+                tokenInterval = null;
+            }
+            
+            currentToken = null;
+            showToast('Ready for new token', 'info');
+        }
+        
+        // ============================================
+        // NOTIFICATION
+        // ============================================
+        function playNotificationSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.frequency.value = 880;
+                gainNode.gain.value = 0.3;
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 1);
+                oscillator.stop(audioContext.currentTime + 1);
+                if (navigator.vibrate) navigator.vibrate(200);
+            } catch(e) {
+                if (navigator.vibrate) navigator.vibrate(200);
+            }
+        }
+        
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.left = '50%';
+            toast.style.transform = 'translateX(-50%)';
+            toast.style.backgroundColor = type === 'success' ? '#00c853' : (type === 'error' ? '#ff4444' : '#3498db');
+            toast.style.color = 'white';
+            toast.style.padding = '12px 24px';
+            toast.style.borderRadius = '50px';
+            toast.style.fontSize = '14px';
+            toast.style.fontWeight = 'bold';
+            toast.style.zIndex = '2000';
+            toast.style.boxShadow = '0 5px 20px rgba(0,0,0,0.2)';
+            toast.style.animation = 'fadeInUp 0.3s ease';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'fadeOutDown 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        document.getElementById('getTokenBtn').addEventListener('click', getToken);
+        document.getElementById('newTokenBtn').addEventListener('click', resetForNewToken);
+        
+        document.getElementById('customerPhone').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !document.getElementById('getTokenBtn').disabled) {
+                getToken();
+            }
+        });
+        
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        checkApiConnection();
+        setInterval(checkApiConnection, 30000);
+        
+        console.log('Customer Token UI Ready');
+        console.log('API Base URL:', API_BASE_URL);
+    </script>
+</body>
+</html>

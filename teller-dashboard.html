@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teller Dashboard - Queue Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .logo span {
+            color: #ffd700;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .teller-info {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .teller-name {
+            font-weight: bold;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-available {
+            background: #00c853;
+            color: white;
+        }
+
+        .status-busy {
+            background: #ff9800;
+            color: white;
+        }
+
+        .status-called {
+            background: #ff9800;
+            color: white;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #f44336;
+            border-color: #f44336;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .queue-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .panel-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .refresh-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 5px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .queue-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .queue-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-left: 4px solid #ff9800;
+        }
+
+        .queue-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .queue-token {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e3c72;
+            font-family: monospace;
+        }
+
+        .queue-customer {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .queue-time {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .call-btn {
+            background: linear-gradient(135deg, #00c853, #00e676);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .call-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .empty-queue {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .serving-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .current-serving-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .serving-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .serving-token {
+            font-size: 64px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+
+        .serving-customer {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .btn-serve {
+            background: linear-gradient(135deg, #ff9800, #ffc107);
+            color: white;
+        }
+
+        .btn-complete {
+            background: linear-gradient(135deg, #2196f3, #03a9f4);
+            color: white;
+        }
+
+        .btn-skip {
+            background: linear-gradient(135deg, #f44336, #e91e63);
+            color: white;
+        }
+
+        .btn-recall {
+            background: linear-gradient(135deg, #9c27b0, #673ab7);
+            color: white;
+        }
+
+        .action-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .no-customer {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .activity-log {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .log-list {
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            color: #555;
+        }
+
+        .log-time {
+            color: #999;
+            margin-right: 10px;
+        }
+
+        .log-success {
+            color: #00c853;
+        }
+
+        .log-warning {
+            color: #ff9800;
+        }
+
+        .log-error {
+            color: #f44336;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .modal-confirm {
+            background: #00c853;
+            color: white;
+        }
+
+        .modal-cancel {
+            background: #ccc;
+            color: #333;
+        }
+
+        @media (max-width: 900px) {
+            .two-columns {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            .header-right {
+                flex-direction: column;
+            }
+            .serving-token {
+                font-size: 40px;
+                letter-spacing: 4px;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            🏦 Queue <span>Manager</span>
+        </div>
+        <div class="header-right">
+            <div class="teller-info">
+                <span class="teller-name" id="tellerName">Loading...</span>
+                <span class="status-badge status-available" id="tellerStatus">Available</span>
+                <span id="currentTokenBadge" style="font-size: 12px;"></span>
+            </div>
+            <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="waitingCount">0</div>
+                <div class="stat-label">Waiting Customers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="servingCount">0</div>
+                <div class="stat-label">Currently Serving</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completedToday">0</div>
+                <div class="stat-label">Completed Today</div>
+            </div>
+        </div>
+
+        <div class="two-columns">
+            <div class="queue-panel">
+                <div class="panel-title">
+                    <span>📋 Waiting Queue</span>
+                    <button class="refresh-btn" onclick="loadWaitingList()">🔄 Refresh</button>
+                </div>
+                <div id="queueContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading queue...
+                    </div>
+                </div>
+            </div>
+
+            <div class="serving-panel">
+                <div class="panel-title">
+                    <span>🟢 Currently Serving</span>
+                </div>
+                <div id="servingContainer">
+                    <div class="no-customer">
+                        😴 No customer being served
+                        <br>
+                        <small>Click "Call Next" to start</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="activity-log">
+            <div class="panel-title">
+                <span>📝 Activity Log</span>
+                <button class="refresh-btn" onclick="clearLog()">Clear</button>
+            </div>
+            <div class="log-list" id="logList">
+                <div class="log-entry">✅ Dashboard ready.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="confirmModal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Confirm Action</h3>
+            <p id="modalMessage">Are you sure?</p>
+            <div class="modal-buttons">
+                <button class="modal-btn modal-confirm" onclick="confirmAction()">Yes, Proceed</button>
+                <button class="modal-btn modal-cancel" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CHECK LOGIN AND GET TELLER INFO
+        // ============================================
+        function checkLogin() {
+            const loggedIn = sessionStorage.getItem('loggedInTeller');
+            if (!loggedIn) {
+                window.location.href = 'teller-login.html';
+                return null;
+            }
+            return JSON.parse(loggedIn);
+        }
+
+        const loggedInTeller = checkLogin();
+        
+        let currentTeller = {
+            id: loggedInTeller ? loggedInTeller.id : 1,
+            number: loggedInTeller ? loggedInTeller.teller_number : 1,
+            name: loggedInTeller ? (loggedInTeller.teller_name || loggedInTeller.name) : "Teller",
+            serviceCategory: loggedInTeller ? (loggedInTeller.serving_category || loggedInTeller.serviceCategory || "W") : "W"
+        };
+
+        document.getElementById('tellerName').textContent = currentTeller.name;
+
+        function logout() {
+            sessionStorage.removeItem('loggedInTeller');
+            window.location.href = 'teller-login.html';
+        }
+        
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const API_BASE_URL = "http://127.0.0.1:5000";
+        
+        let currentServing = null;
+        let pendingAction = null;
+        let refreshInterval = null;
+        
+        const serviceCategories = {
+            'W': 'Withdrawal',
+            'L': 'Loan Application',
+            'D': 'Deposit',
+            'C': 'Account Opening',
+            'T': 'Cheque Processing',
+            'E': 'Enquiries'
+        };
+        
+        // ============================================
+        // API CALLS
+        // ============================================
+        
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' }
+                };
+                if (data) options.body = JSON.stringify(data);
+                
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                addLog(`❌ API Error: ${error.message}`, 'error');
+                return { success: false, message: error.message };
+            }
+        }
+        
+        // ============================================
+        // LOAD WAITING LIST - USING CORRECT ENDPOINT
+        // ============================================
+        
+        async function loadWaitingList() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/queue/waiting-list/${currentTeller.serviceCategory}`);
+                const data = await response.json();
+                
+                const container = document.getElementById('queueContainer');
+                
+                if (data.success && data.waiting_tokens && data.waiting_tokens.length > 0) {
+                    container.innerHTML = `
+                        <div class="queue-list">
+                            ${data.waiting_tokens.map(token => `
+                                <div class="queue-item">
+                                    <div>
+                                        <div class="queue-token">${token.token_number}</div>
+                                        <div class="queue-customer">
+                                            ${token.customer_name || 'Guest'} 
+                                            ${token.customer_phone ? '• ' + token.customer_phone : ''}
+                                        </div>
+                                        <div class="queue-time">⏱️ Waiting: ${token.waiting_minutes || 0} min</div>
+                                    </div>
+                                    <button class="call-btn" onclick="callSpecificCustomer('${token.token_number}')">
+                                        📢 Call
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    document.getElementById('waitingCount').textContent = data.waiting_tokens.length;
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-queue">
+                            🎉 No customers waiting
+                            <br>
+                            <small>Queue is empty for ${serviceCategories[currentTeller.serviceCategory]}</small>
+                        </div>
+                    `;
+                    document.getElementById('waitingCount').textContent = 0;
+                }
+            } catch (error) {
+                console.error('Error loading waiting list:', error);
+                document.getElementById('queueContainer').innerHTML = `
+                    <div class="empty-queue">
+                        ❌ Error loading queue
+                        <br>
+                        <small>Please check if server is running</small>
+                    </div>
+                `;
+            }
+        }
+        
+        // ============================================
+        // LOAD CURRENT SERVING
+        // ============================================
+        async function loadCurrentServing() {
+            try {
+                const result = await apiCall('/api/tellers');
+                
+                if (result.success && result.tellers) {
+                    const teller = result.tellers.find(t => t.id === currentTeller.id);
+                    
+                    if (teller && teller.current_token) {
+                        currentServing = teller.current_token;
+                        document.getElementById('servingContainer').innerHTML = `
+                            <div class="current-serving-card">
+                                <div class="serving-label">🔔 CURRENTLY SERVING</div>
+                                <div class="serving-token">${teller.current_token}</div>
+                                <div class="serving-customer">
+                                    ${teller.status === 'busy' ? 'Being served now' : 'Called - Please proceed'}
+                                </div>
+                            </div>
+                            <div class="action-buttons">
+                                ${teller.status === 'called' ? `
+                                    <button class="action-btn btn-serve" onclick="serveCustomer()">🟢 START SERVING</button>
+                                ` : `
+                                    <button class="action-btn btn-complete" onclick="completeService()">✅ COMPLETE SERVICE</button>
+                                `}
+                                <button class="action-btn btn-recall" onclick="recallCustomer()">🔁 RECALL</button>
+                                <button class="action-btn btn-skip" onclick="skipCustomer()">⏭️ SKIP</button>
+                            </div>
+                        `;
+                        
+                        const statusEl = document.getElementById('tellerStatus');
+                        if (teller.status === 'busy') {
+                            statusEl.textContent = 'Serving';
+                            statusEl.className = 'status-badge status-busy';
+                        } else if (teller.status === 'called') {
+                            statusEl.textContent = 'Called';
+                            statusEl.className = 'status-badge status-called';
+                        } else {
+                            statusEl.textContent = 'Available';
+                            statusEl.className = 'status-badge status-available';
+                        }
+                        document.getElementById('currentTokenBadge').innerHTML = `🎫 ${teller.current_token}`;
+                    } else {
+                        currentServing = null;
+                        document.getElementById('servingContainer').innerHTML = `
+                            <div class="no-customer">
+                                😴 No customer being served
+                                <br>
+                                <small>Click "Call Next" to start</small>
+                            </div>
+                        `;
+                        document.getElementById('tellerStatus').textContent = 'Available';
+                        document.getElementById('tellerStatus').className = 'status-badge status-available';
+                        document.getElementById('currentTokenBadge').innerHTML = '';
+                    }
+                }
+                
+                const result2 = await apiCall('/api/queue/current');
+                if (result2.success && result2.queue) {
+                    document.getElementById('servingCount').textContent = result2.queue.reduce((sum, s) => sum + (s.serving_count || 0), 0);
+                }
+            } catch (error) {
+                console.error('Error loading current serving:', error);
+            }
+        }
+        
+        // ============================================
+        // TELLER ACTIONS
+        // ============================================
+        
+        async function callNextCustomer() {
+            addLog(`📢 Calling next customer...`, 'info');
+            
+            const result = await apiCall('/api/tellers/call-next', 'POST', {
+                teller_id: currentTeller.id,
+                teller_number: currentTeller.number,
+                service_category: currentTeller.serviceCategory
+            });
+            
+            if (result.success) {
+                addLog(`✅ Called customer ${result.token_number}`, 'success');
+                await loadWaitingList();
+                await loadCurrentServing();
+                playNotificationSound();
+            } else {
+                addLog(`❌ ${result.message || 'Failed to call customer'}`, 'error');
+            }
+        }
+        
+        async function callSpecificCustomer(tokenNumber) {
+            addLog(`📢 Calling customer ${tokenNumber}...`, 'info');
+            
+            const result = await apiCall('/api/tellers/call-specific', 'POST', {
+                teller_id: currentTeller.id,
+                teller_number: currentTeller.number,
+                token_number: tokenNumber
+            });
+            
+            if (result.success) {
+                addLog(`✅ Called customer ${tokenNumber}`, 'success');
+                await loadWaitingList();
+                await loadCurrentServing();
+                playNotificationSound();
+            } else {
+                addLog(`❌ ${result.message || 'Failed to call customer'}`, 'error');
+            }
+        }
+        
+        async function serveCustomer() {
+            if (!currentServing) {
+                addLog('⚠️ No customer to serve', 'warning');
+                return;
+            }
+            
+            showConfirm('Start Serving', `Start serving customer ${currentServing}?`, async () => {
+                addLog(`🟢 Starting to serve ${currentServing}...`, 'info');
+                
+                const result = await apiCall('/api/tellers/serve', 'POST', {
+                    teller_id: currentTeller.id,
+                    token_number: currentServing
+                });
+                
+                if (result.success) {
+                    addLog(`✅ Now serving ${currentServing}`, 'success');
+                    await loadWaitingList();
+                    await loadCurrentServing();
+                } else {
+                    addLog(`❌ ${result.message || 'Failed to start serving'}`, 'error');
+                }
+            });
+        }
+        
+        async function completeService() {
+            if (!currentServing) {
+                addLog('⚠️ No customer to complete', 'warning');
+                return;
+            }
+            
+            showConfirm('Complete Service', `Mark ${currentServing} as completed?`, async () => {
+                addLog(`✅ Completing service for ${currentServing}...`, 'info');
+                
+                const result = await apiCall('/api/tellers/complete', 'POST', {
+                    teller_id: currentTeller.id,
+                    token_number: currentServing
+                });
+                
+                if (result.success) {
+                    addLog(`✅ Service completed for ${currentServing}`, 'success');
+                    updateCompletedCount();
+                    currentServing = null;
+                    await loadWaitingList();
+                    await loadCurrentServing();
+                } else {
+                    addLog(`❌ ${result.message || 'Failed to complete service'}`, 'error');
+                }
+            });
+        }
+        
+        async function skipCustomer() {
+            if (!currentServing) {
+                addLog('⚠️ No customer to skip', 'warning');
+                return;
+            }
+            
+            showConfirm('Skip Customer', `Skip customer ${currentServing}?`, async () => {
+                addLog(`⏭️ Skipping customer ${currentServing}...`, 'warning');
+                
+                const result = await apiCall('/api/tellers/skip', 'POST', {
+                    teller_id: currentTeller.id,
+                    token_number: currentServing
+                });
+                
+                if (result.success) {
+                    addLog(`⚠️ Customer ${currentServing} was skipped`, 'warning');
+                    currentServing = null;
+                    await loadWaitingList();
+                    await loadCurrentServing();
+                } else {
+                    addLog(`❌ ${result.message || 'Failed to skip customer'}`, 'error');
+                }
+            });
+        }
+        
+        async function recallCustomer() {
+            if (!currentServing) {
+                addLog('⚠️ No customer to recall', 'warning');
+                return;
+            }
+            
+            addLog(`🔁 Recalling customer ${currentServing}...`, 'info');
+            
+            const result = await apiCall('/api/tellers/recall', 'POST', {
+                teller_id: currentTeller.id,
+                token_number: currentServing
+            });
+            
+            if (result.success) {
+                addLog(`🔁 Recall announcement sent for ${currentServing}`, 'success');
+                playNotificationSound();
+            } else {
+                addLog(`❌ ${result.message || 'Failed to recall'}`, 'error');
+            }
+        }
+        
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        
+        function addLog(message, type = 'info') {
+            const logList = document.getElementById('logList');
+            const time = new Date().toLocaleTimeString();
+            const logClass = type === 'success' ? 'log-success' : (type === 'error' ? 'log-error' : (type === 'warning' ? 'log-warning' : ''));
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `<span class="log-time">[${time}]</span> <span class="${logClass}">${message}</span>`;
+            
+            logList.insertBefore(logEntry, logList.firstChild);
+            
+            while (logList.children.length > 50) {
+                logList.removeChild(logList.lastChild);
+            }
+        }
+        
+        function clearLog() {
+            document.getElementById('logList').innerHTML = '<div class="log-entry">✅ Log cleared</div>';
+        }
+        
+        function updateCompletedCount() {
+            let count = parseInt(document.getElementById('completedToday').textContent) || 0;
+            document.getElementById('completedToday').textContent = count + 1;
+        }
+        
+        function playNotificationSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.frequency.value = 880;
+                gainNode.gain.value = 0.3;
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 1);
+                oscillator.stop(audioContext.currentTime + 1);
+            } catch(e) {
+                console.log('Sound not supported');
+            }
+        }
+        
+        function showConfirm(title, message, onConfirm) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = message;
+            pendingAction = onConfirm;
+            document.getElementById('confirmModal').style.display = 'flex';
+        }
+        
+        function confirmAction() {
+            if (pendingAction) {
+                pendingAction();
+                pendingAction = null;
+            }
+            closeModal();
+        }
+        
+        function closeModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+        
+        // ============================================
+        // INITIALIZE
+        // ============================================
+        
+        async function init() {
+            addLog('✅ Teller Dashboard initialized', 'success');
+            addLog(`👨‍💼 Logged in as: ${currentTeller.name} - ${serviceCategories[currentTeller.serviceCategory]}`, 'success');
+            
+            await loadWaitingList();
+            await loadCurrentServing();
+            
+            refreshInterval = setInterval(() => {
+                loadWaitingList();
+                loadCurrentServing();
+            }, 5000);
+        }
+        
+        // Make functions global
+        window.callNextCustomer = callNextCustomer;
+        window.callSpecificCustomer = callSpecificCustomer;
+        window.serveCustomer = serveCustomer;
+        window.completeService = completeService;
+        window.skipCustomer = skipCustomer;
+        window.recallCustomer = recallCustomer;
+        window.loadWaitingList = loadWaitingList;
+        window.clearLog = clearLog;
+        window.closeModal = closeModal;
+        window.confirmAction = confirmAction;
+        window.logout = logout;
+        
+        init();
+    </script>
+</body>
+</html>

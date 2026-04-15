@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teller Management — Queue System</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #1e3c72;
+      --blue:      #2a5298;
+      --green:     #00c853;
+      --green-lt:  #e8f5e9;
+      --amber:     #ff9800;
+      --red:       #f44336;
+      --purple:    #9c27b0;
+      --sky:       #3498db;
+      --bg:        #f0f2f7;
+      --surface:   #ffffff;
+      --border:    #e4e7ef;
+      --text:      #1a1f36;
+      --muted:     #6b7280;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 22px;
+      --shadow:    0 1px 3px rgba(30,60,114,.06), 0 4px 16px rgba(30,60,114,.08);
+      --shadow-lg: 0 8px 32px rgba(30,60,114,.14);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 62px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 500;
+      letter-spacing: .3px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: rgba(255,255,255,.15);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .logo-icon svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .logo-accent { color: #ffd700; }
+
+    .nav { display: flex; gap: 4px; }
+
+    .nav-link {
+      color: rgba(255,255,255,.75);
+      text-decoration: none;
+      padding: 6px 13px;
+      border-radius: var(--radius-sm);
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: background .2s, color .2s;
+    }
+
+    .nav-link:hover { background: rgba(255,255,255,.12); color: #fff; }
+    .nav-link.active { background: rgba(255,255,255,.18); color: #fff; }
+
+    /* ── PAGE WRAPPER ── */
+    .page { max-width: 1360px; margin: 0 auto; padding: 28px 24px 48px; }
+
+    /* ── PAGE HEADING ── */
+    .page-heading {
+      display: flex; align-items: baseline; gap: 12px;
+      margin-bottom: 28px;
+      animation: fadeUp .45s ease both;
+    }
+
+    .page-heading h1 { font-size: 24px; font-weight: 500; color: var(--navy); }
+    .page-heading p  { font-size: 13px; color: var(--muted); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── GRID ── */
+    .grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: fadeUp .5s ease both;
+    }
+
+    .card:nth-child(2) { animation-delay: .08s; }
+
+    .card-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+
+    .card-title {
+      font-size: 15px; font-weight: 500; color: var(--navy);
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .card-title svg { width: 16px; height: 16px; stroke: var(--navy); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+    .card-body { padding: 24px; }
+
+    /* ── FORM ── */
+    .field { margin-bottom: 18px; }
+
+    .field label {
+      display: block;
+      font-size: 12px; font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase; letter-spacing: .6px;
+      margin-bottom: 7px;
+    }
+
+    .field-required::after { content: ' *'; color: var(--red); }
+
+    .field input,
+    .field select {
+      width: 100%;
+      padding: 10px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      background: #fff;
+      transition: border-color .2s, box-shadow .2s;
+      appearance: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      outline: none;
+      border-color: var(--sky);
+      box-shadow: 0 0 0 3px rgba(52,152,219,.12);
+    }
+
+    .field input::placeholder { color: #b0b7c3; }
+
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: '';
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--muted);
+      pointer-events: none;
+      margin-top: 3px;
+    }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 10px 18px;
+      border: none; border-radius: var(--radius-sm);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s, box-shadow .2s;
+    }
+
+    .btn:active { transform: scale(.97); }
+
+    .btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .btn-primary {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #00c853, #00e676);
+      color: #fff;
+      border-radius: var(--radius-md);
+      font-size: 15px;
+      margin-top: 6px;
+    }
+
+    .btn-primary:hover { opacity: .9; box-shadow: 0 4px 14px rgba(0,200,83,.3); }
+
+    .btn-secondary {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: var(--muted);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    .btn-secondary:hover { background: var(--bg); }
+
+    .btn-icon {
+      padding: 6px 11px;
+      border-radius: 7px;
+      font-size: 12.5px;
+      gap: 5px;
+    }
+
+    .btn-edit   { background: #e8f4fd; color: var(--sky); }
+    .btn-edit:hover { background: #cce5f6; }
+
+    .btn-reset-pin { background: #fff3e0; color: var(--amber); }
+    .btn-reset-pin:hover { background: #ffe0b2; }
+
+    .btn-del    { background: #fdecea; color: var(--red); }
+    .btn-del:hover { background: #f9c6c3; }
+
+    /* ── SEARCH ── */
+    .search-wrap { position: relative; }
+    .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; stroke: var(--muted); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .search-wrap input {
+      width: 240px;
+      padding: 8px 12px 8px 34px;
+      border: 1.5px solid var(--border);
+      border-radius: 50px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .search-wrap input:focus { outline: none; border-color: var(--sky); box-shadow: 0 0 0 3px rgba(52,152,219,.1); }
+    .search-wrap input::placeholder { color: #b0b7c3; }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; min-width: 620px; }
+
+    thead th {
+      padding: 11px 14px;
+      text-align: left;
+      font-size: 11.5px; font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase; letter-spacing: .6px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    thead th:first-child { border-radius: 8px 0 0 8px; padding-left: 20px; }
+    thead th:last-child  { border-radius: 0 8px 8px 0; }
+
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f7f9ff; }
+
+    tbody td {
+      padding: 13px 14px;
+      font-size: 14px;
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    tbody td:first-child { padding-left: 20px; color: var(--muted); font-size: 12px; }
+
+    .teller-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      background: #eef2ff;
+      color: var(--navy);
+      padding: 3px 9px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .teller-name { font-weight: 500; }
+
+    /* ── STATUS BADGE ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px;
+      border-radius: 50px;
+      font-size: 12px; font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .8;
+    }
+
+    .badge-available { background: #e8f5e9; color: #2e7d32; }
+    .badge-busy      { background: #fff3e0; color: #e65100; }
+    .badge-called    { background: #fff3e0; color: #e65100; }
+    .badge-offline   { background: #fdecea; color: #c62828; }
+    .badge-break     { background: #f3e5f5; color: #6a1b9a; }
+
+    /* ── ACTION CELL ── */
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center;
+      padding: 56px 20px;
+      color: var(--muted);
+    }
+
+    .empty-icon {
+      width: 52px; height: 52px;
+      background: var(--bg);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+
+    .empty-icon svg { width: 22px; height: 22px; stroke: var(--muted); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .empty h3 { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+    .empty p  { font-size: 13px; }
+
+    /* ── SPINNER ── */
+    .spin-wrap { text-align: center; padding: 56px 20px; color: var(--muted); }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 2.5px solid var(--border);
+      border-top-color: var(--sky);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+      margin: 0 auto 14px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── MODAL OVERLAY ── */
+    .overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(10,20,50,.45);
+      z-index: 200;
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+
+    .overlay.open { display: flex; animation: fadeBg .2s ease; }
+
+    @keyframes fadeBg { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      width: 100%; max-width: 400px;
+      box-shadow: var(--shadow-lg);
+      animation: popIn .25s cubic-bezier(.34,1.56,.64,1) both;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(.92); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-icon {
+      width: 46px; height: 46px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-icon svg { width: 22px; height: 22px; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .modal-icon.danger { background: #fdecea; }
+    .modal-icon.danger svg { stroke: var(--red); }
+    .modal-icon.warning { background: #fff3e0; }
+    .modal-icon.warning svg { stroke: var(--amber); }
+
+    .modal h2 { font-size: 17px; font-weight: 500; margin-bottom: 8px; }
+    .modal p  { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    .modal-field { margin-top: 18px; }
+    .modal-field label { font-size: 12px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; display: block; margin-bottom: 7px; }
+    .modal-field input { width: 100%; padding: 10px 13px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: 'DM Sans', sans-serif; transition: border-color .2s; }
+    .modal-field input:focus { outline: none; border-color: var(--sky); box-shadow: 0 0 0 3px rgba(52,152,219,.12); }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 22px; }
+    .modal-actions .btn { flex: 1; padding: 11px; border-radius: var(--radius-sm); font-size: 14px; }
+
+    .btn-confirm-del { background: var(--red); color: #fff; }
+    .btn-confirm-del:hover { opacity: .9; }
+
+    .btn-confirm-pin { background: var(--amber); color: #fff; }
+    .btn-confirm-pin:hover { opacity: .9; }
+
+    .btn-cancel { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+    .btn-cancel:hover { background: var(--border); }
+
+    /* ── TOAST ── */
+    .toast-wrap { position: fixed; bottom: 24px; right: 24px; z-index: 500; display: flex; flex-direction: column; gap: 8px; }
+
+    .toast {
+      display: flex; align-items: center; gap: 10px;
+      background: #1a1f36; color: #fff;
+      padding: 12px 18px;
+      border-radius: var(--radius-md);
+      font-size: 13.5px; font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      animation: toastIn .3s cubic-bezier(.34,1.56,.64,1) both;
+      min-width: 220px;
+    }
+
+    .toast svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    @keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+    .toast-success { background: #1b5e20; }
+    .toast-error   { background: #b71c1c; }
+    .toast-info    { background: #0d47a1; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 960px) {
+      .grid { grid-template-columns: 1fr; }
+      .header { padding: 0 1.25rem; height: auto; flex-wrap: wrap; gap: 10px; padding-top: 12px; padding-bottom: 12px; }
+      .nav { flex-wrap: wrap; gap: 4px; }
+      .nav-link { font-size: 12.5px; padding: 5px 10px; }
+    }
+
+    @media (max-width: 560px) {
+      .page { padding: 18px 14px 40px; }
+      .card-body { padding: 18px; }
+      .card-header { padding: 16px 18px 14px; }
+      .search-wrap input { width: 100%; }
+      .card-header { flex-direction: column; align-items: flex-start; }
+      .field-row { grid-template-columns: 1fr; }
+      .page-heading h1 { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header class="header">
+    <a href="#" class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      Queue <span class="logo-accent">Manager</span>
+    </a>
+    <nav class="nav">
+      <a href="teller-dashboard.html"    class="nav-link">Dashboard</a>
+      <a href="teller-management.html"   class="nav-link active">Teller Management</a>
+      <a href="customer-token.html"      class="nav-link">Get Token</a>
+      <a href="public-display.html"      class="nav-link">Public Display</a>
+       <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+    </nav>
+  </header>
+
+  <!-- ── PAGE ── -->
+  <main class="page">
+
+    <div class="page-heading">
+      <h1>Teller Management</h1>
+      <p>Add, edit and manage tellers</p>
+    </div>
+
+    <div class="grid">
+
+      <!-- ── FORM CARD ── -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title" id="formTitle">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            Add new teller
+          </span>
+        </div>
+        <div class="card-body">
+          <form id="tellerForm" novalidate>
+            <input type="hidden" id="tellerId" />
+
+            <div class="field-row">
+              <div class="field">
+                <label class="field-required">Teller number</label>
+                <input type="number" id="tellerNumber" placeholder="e.g. 3" min="1" required />
+              </div>
+              <div class="field">
+                <label class="field-required">Service category</label>
+                <div class="select-wrap">
+                  <select id="serviceCategory" required>
+                    <option value="">Select…</option>
+                    <option value="W">Withdrawal (W)</option>
+                    <option value="L">Loan Application (L)</option>
+                    <option value="D">Deposit (D)</option>
+                    <option value="C">Account Opening (C)</option>
+                    <option value="T">Cheque Processing (T)</option>
+                    <option value="E">Enquiries (E)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field-required">Full name</label>
+              <input type="text" id="tellerName" placeholder="e.g. John Mwangi" required />
+            </div>
+
+            <div class="field">
+              <label>Email address</label>
+              <input type="email" id="tellerEmail" placeholder="john@bank.com" />
+            </div>
+
+            <div class="field">
+              <label>Phone number</label>
+              <input type="tel" id="tellerPhone" placeholder="e.g. 0712 345 678" />
+            </div>
+
+            <div class="field">
+              <label>PIN code</label>
+              <input type="password" id="pinCode" placeholder="4-digit PIN" maxlength="4" />
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+              <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              Add teller
+            </button>
+            <button type="button" class="btn btn-secondary" id="cancelBtn" style="display:none" onclick="cancelEdit()">Cancel editing</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ── TABLE CARD ── -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">
+            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            Registered tellers
+          </span>
+          <div class="search-wrap">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchBox" placeholder="Search by name or number…" />
+          </div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <div id="tellersContainer">
+              <div class="spin-wrap">
+                <div class="spinner"></div>
+                <p>Loading tellers…</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ── DELETE MODAL ── -->
+  <div class="overlay" id="deleteOverlay">
+    <div class="modal">
+      <div class="modal-icon danger">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </div>
+      <h2>Delete teller?</h2>
+      <p id="deleteMessage">This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="btn btn-confirm-del" onclick="confirmDelete()">Yes, delete</button>
+        <button class="btn btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RESET PIN MODAL ── -->
+  <div class="overlay" id="resetOverlay">
+    <div class="modal">
+      <div class="modal-icon warning">
+        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </div>
+      <h2>Reset PIN</h2>
+      <p>Set a new PIN for <strong id="resetTellerName"></strong>.</p>
+      <div class="modal-field">
+        <label>New PIN</label>
+        <input type="password" id="newPin" placeholder="Enter 4-digit PIN" maxlength="4" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-confirm-pin" onclick="confirmResetPin()">Reset PIN</button>
+        <button class="btn btn-cancel" onclick="closeResetModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TOAST CONTAINER ── -->
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <script>
+       function logout() {
+            sessionStorage.removeItem('loggedInTeller');
+            window.location.href = 'index.html';
+        }
+    const API_BASE = 'http://127.0.0.1:5000';
+    let tellersList = [];
+    let deleteId    = null;
+    let resetId     = null;
+
+    /* ── API ── */
+    async function api(path, method = 'GET', body = null) {
+      try {
+        const opts = { method, headers: { 'Content-Type': 'application/json' } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(API_BASE + path, opts);
+        return await res.json();
+      } catch (err) {
+        return { success: false, message: err.message };
+      }
+    }
+
+    /* ── LOAD ── */
+    async function loadTellers() {
+      setContainer(spinner());
+      const r = await api('/api/tellers');
+      if (r.success && r.tellers) {
+        tellersList = r.tellers;
+        render(tellersList);
+      } else {
+        setContainer(emptyState('Could not load tellers', 'Make sure the server is running.'));
+      }
+    }
+
+    /* ── RENDER TABLE ── */
+    function render(list) {
+      if (!list.length) {
+        setContainer(emptyState('No tellers yet', 'Use the form to add your first teller.'));
+        return;
+      }
+
+      const svcMap = { W:'Withdrawal', L:'Loan', D:'Deposit', C:'Account Opening', T:'Cheque', E:'Enquiry' };
+
+      const rows = list.map(t => `
+        <tr>
+          <td>${t.id}</td>
+          <td><span class="teller-num">#${t.teller_number}</span></td>
+          <td class="teller-name">${t.teller_name}</td>
+          <td>${svcMap[t.serving_category] || t.serving_category}</td>
+          <td><span class="badge badge-${t.status || 'offline'}">${cap(t.status || 'offline')}</span></td>
+          <td style="font-family:'DM Mono',monospace;font-size:13px">${t.current_token || '—'}</td>
+          <td>
+            <div class="actions">
+              <button class="btn btn-icon btn-edit"      onclick="editTeller(${t.id})">
+                <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit
+              </button>
+              <button class="btn btn-icon btn-reset-pin" onclick="showResetModal(${t.id},'${esc(t.teller_name)}')">
+                <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                PIN
+              </button>
+              <button class="btn btn-icon btn-del"       onclick="showDeleteModal(${t.id},'${esc(t.teller_name)}')">
+                <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      setContainer(`
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th><th>No.</th><th>Name</th><th>Service</th><th>Status</th><th>Token</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `);
+    }
+
+    /* ── SEARCH ── */
+    document.getElementById('searchBox').addEventListener('input', e => {
+      const q = e.target.value.toLowerCase();
+      render(tellersList.filter(t =>
+        t.teller_name.toLowerCase().includes(q) ||
+        String(t.teller_number).includes(q) ||
+        (t.serving_category || '').toLowerCase().includes(q)
+      ));
+    });
+
+    /* ── FORM SUBMIT ── */
+    document.getElementById('tellerForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const id  = document.getElementById('tellerId').value;
+      const num = document.getElementById('tellerNumber').value;
+      const name = document.getElementById('tellerName').value.trim();
+      const cat  = document.getElementById('serviceCategory').value;
+      const pin  = document.getElementById('pinCode').value;
+
+      if (!num || !name || !cat) { toast('Please fill all required fields.', 'error'); return; }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      const payload = {
+        teller_number: parseInt(num),
+        teller_name: name,
+        email: document.getElementById('tellerEmail').value.trim(),
+        phone: document.getElementById('tellerPhone').value.trim(),
+        serving_category: cat,
+        pin_code: pin || null
+      };
+
+      let r;
+      if (id) {
+        r = await api(`/api/tellers/${id}`, 'PUT', payload);
+      } else {
+        payload.pin_code = pin || '1234';
+        payload.status   = 'available';
+        r = await api('/api/tellers', 'POST', payload);
+      }
+
+      if (r.success) {
+        toast(r.message || 'Saved successfully.', 'success');
+        resetForm();
+        loadTellers();
+      } else {
+        toast(r.message || 'Failed to save teller.', 'error');
+      }
+
+      btn.disabled = false;
+      btn.textContent = id ? 'Update teller' : 'Add teller';
+    });
+
+    /* ── EDIT ── */
+    function editTeller(id) {
+      const t = tellersList.find(x => x.id === id);
+      if (!t) return;
+
+      document.getElementById('formTitle').innerHTML = `
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--navy);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit teller
+      `;
+      document.getElementById('tellerId').value        = t.id;
+      document.getElementById('tellerNumber').value    = t.teller_number;
+      document.getElementById('tellerName').value      = t.teller_name;
+      document.getElementById('tellerEmail').value     = t.email || '';
+      document.getElementById('tellerPhone').value     = t.phone || '';
+      document.getElementById('serviceCategory').value = t.serving_category || '';
+      document.getElementById('pinCode').value         = '';
+      document.getElementById('pinCode').placeholder   = 'Leave blank to keep current PIN';
+      document.getElementById('submitBtn').textContent = 'Update teller';
+      document.getElementById('cancelBtn').style.display = 'block';
+
+      document.querySelector('.card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function cancelEdit() { resetForm(); }
+
+    function resetForm() {
+      document.getElementById('formTitle').innerHTML = `
+        <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:var(--navy);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Add new teller
+      `;
+      document.getElementById('tellerForm').reset();
+      document.getElementById('tellerId').value          = '';
+      document.getElementById('pinCode').placeholder     = '4-digit PIN';
+      document.getElementById('submitBtn').textContent   = 'Add teller';
+      document.getElementById('cancelBtn').style.display = 'none';
+    }
+
+    /* ── DELETE ── */
+    function showDeleteModal(id, name) {
+      deleteId = id;
+      document.getElementById('deleteMessage').innerHTML = `Are you sure you want to delete <strong>${name}</strong>? This cannot be undone.`;
+      document.getElementById('deleteOverlay').classList.add('open');
+    }
+
+    async function confirmDelete() {
+      const r = await api(`/api/tellers/${deleteId}`, 'DELETE');
+      toast(r.success ? (r.message || 'Teller deleted.') : (r.message || 'Delete failed.'), r.success ? 'success' : 'error');
+      if (r.success) loadTellers();
+      closeDeleteModal();
+    }
+
+    function closeDeleteModal() { deleteId = null; document.getElementById('deleteOverlay').classList.remove('open'); }
+
+    /* ── RESET PIN ── */
+    function showResetModal(id, name) {
+      resetId = id;
+      document.getElementById('resetTellerName').textContent = name;
+      document.getElementById('newPin').value = '';
+      document.getElementById('resetOverlay').classList.add('open');
+    }
+
+    async function confirmResetPin() {
+      const pin = document.getElementById('newPin').value;
+      if (!pin || pin.length < 4) { toast('Please enter a 4-digit PIN.', 'error'); return; }
+      const r = await api(`/api/tellers/${resetId}/reset-pin`, 'POST', { pin_code: pin });
+      toast(r.success ? 'PIN reset successfully.' : (r.message || 'Reset failed.'), r.success ? 'success' : 'error');
+      closeResetModal();
+    }
+
+    function closeResetModal() { resetId = null; document.getElementById('resetOverlay').classList.remove('open'); }
+
+    /* ── CLOSE MODALS ON OVERLAY CLICK ── */
+    document.getElementById('deleteOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeDeleteModal(); });
+    document.getElementById('resetOverlay').addEventListener('click',  e => { if (e.target === e.currentTarget) closeResetModal(); });
+
+    /* ── TOAST ── */
+    function toast(msg, type = 'info') {
+      const icons = {
+        success: '<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg>',
+        error:   '<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+        info:    '<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+      };
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.innerHTML = (icons[type] || '') + msg;
+      document.getElementById('toastWrap').appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    /* ── HELPERS ── */
+    function setContainer(html) { document.getElementById('tellersContainer').innerHTML = html; }
+    function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+    function esc(s) { return s.replace(/'/g, "\\'"); }
+    function spinner() { return `<div class="spin-wrap"><div class="spinner"></div><p>Loading tellers…</p></div>`; }
+    function emptyState(title, sub) {
+      return `<div class="empty">
+        <div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></div>
+        <h3>${title}</h3><p>${sub}</p>
+      </div>`;
+    }
+
+    loadTellers();
+  </script>
+</body>
+</html>
