@@ -25,7 +25,7 @@ CORS(app)
 # RAILWAY / PRODUCTION CONFIGURATION
 # ============================================
 
-PORT = int(os.environ.get('PORT', 5000))
+PORT = int(os.environ.get('PORT', 8080))
 
 # Print all env vars for debugging (masks password)
 print("=" * 50)
@@ -825,7 +825,7 @@ def reset_teller_pin(teller_id):
 # ============================================
 
 if __name__ == '__main__':
-    PORT = int(os.environ.get('PORT', 5000))
+    PORT = int(os.environ.get('PORT', 8080))
 
     print("=" * 50)
     print("🚀 Queue Management System API (Flask)")
