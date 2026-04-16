@@ -465,6 +465,7 @@
       <span>Thank you for banking with First Community Bank</span>
       <span>Please maintain silence in the banking hall</span>
       <span>Our tellers are here to serve you</span>
+      <!-- duplicated for seamless loop -->
       <span>Please keep your token number ready</span>
       <span>Listen carefully for your token announcement</span>
       <span>Proceed immediately to the teller when called</span>
@@ -545,9 +546,9 @@
 
 <script>
   // ============================================================
-  // CONFIGURATION — Auto-detect API URL (works locally + railway)
+  // CONFIGURATION — update these to match your environment
   // ============================================================
-  const API_BASE_URL = window.location.origin;  // Uses current host automatically
+  const API_BASE_URL   = "https://web-production-9a5d1.up.railway.app";
   const GOOGLE_API_KEY = "AIzaSyDS83DgfiXEvcIbm2klAa2FzkswmQFN4Zs";
 
   // ============================================================
@@ -619,9 +620,9 @@
     a.play().catch(() => {});
   }
 
-  async function speak(text, token) {
+  async function speak(text, label) {
     const statusEl = document.getElementById('voiceStatus');
-    statusEl.textContent = `Announcing ${token}…`;
+    statusEl.textContent = `Announcing ${label}…`;
     try {
       const res = await fetch("https://texttospeech.googleapis.com/v1/text:synthesize", {
         method:  'POST',
@@ -670,7 +671,7 @@
             const spelled = r.token_number.split('').join(' ');
             await speak(
               `Attention please. Token ${spelled}, please go to teller number ${num}.`,
-              r.token_number
+              `recall ${r.token_number}`
             );
             lastRecallIds.push(id);
             if (lastRecallIds.length > 50) lastRecallIds.shift();
@@ -755,7 +756,6 @@
   setInterval(checkRecalls,   2000);
 
   console.log('📺 Queue Display — initialized');
-  console.log(`🔌 API URL: ${API_BASE_URL}`);
 </script>
 </body>
 </html>
