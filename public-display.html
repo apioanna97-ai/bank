@@ -327,10 +327,14 @@
             </div>
         </div>
 
-        <div class="footer">
-            <p>© 2024 First Community Bank | Queue Management System</p>
-            <p>📢 Please listen for your token number announcement | 🖥️ Watch the screen for your turn</p>
-        </div>
+      <div class="footer">
+    <p>© <span id="year"></span> First Community Bank | Queue Management System</p>
+    <p>📢 Please listen for your token number announcement | 🖥️ Watch the screen for your turn</p>
+</div>
+
+<script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+</script>
     </div>
 
     <div class="voice-indicator" id="voiceIndicator">
