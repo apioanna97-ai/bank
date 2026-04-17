@@ -391,8 +391,9 @@
     // ============================================================
     const API_BASE_URL = "https://web-production-9a5d1.up.railway.app";
     
-    // ADMIN TELLER IDs that should go to management page
-    const ADMIN_TELLER_IDS = [8]; // Teller ID 8 goes to management page
+    // ADMIN TELLER NUMBERS that should go to management page
+    // These are the TELLER_NUMBER values from the database, not the database ID
+    const ADMIN_TELLER_NUMBERS = [8]; // Teller number 8 goes to management page
     
     // DOM elements
     const loginForm = document.getElementById('loginForm');
@@ -467,6 +468,8 @@
             pin_code: pinCode
         };
 
+        console.log('Attempting login with:', payload);
+
         const response = await fetch(`${API_BASE_URL}/api/tellers/login`, {
             method: 'POST',
             headers: {
@@ -485,6 +488,8 @@
             throw new Error(`Invalid server response: ${text.substring(0, 80)}`);
         }
 
+        console.log('Login response:', result);
+
         if (!response.ok) {
             throw new Error(result.message || `Login failed (${response.status})`);
         }
@@ -497,7 +502,7 @@
     }
 
     // ============================================================
-    // 3. MAIN LOGIN HANDLER - Routes to appropriate page based on teller ID
+    // 3. MAIN LOGIN HANDLER - Routes to appropriate page based on teller NUMBER
     // ============================================================
     async function handleLoginSubmit(event) {
         event.preventDefault();
@@ -543,8 +548,13 @@
             // success case
             if (loginResult.success && loginResult.teller) {
                 const tellerData = loginResult.teller;
-                const tellerId = tellerData.id;
-                const tellerNumber = tellerData.teller_number;
+                const tellerNumberFromBackend = tellerData.teller_number; // This is the TELLER NUMBER
+                const tellerDbId = tellerData.id; // This is the database ID
+                
+                console.log('Teller number from backend:', tellerNumberFromBackend);
+                console.log('Teller DB ID:', tellerDbId);
+                console.log('Admin teller numbers:', ADMIN_TELLER_NUMBERS);
+                console.log('Is admin?', ADMIN_TELLER_NUMBERS.includes(tellerNumberFromBackend));
 
                 // Build session object with all required fields for dashboard
                 const loggedInTeller = {
@@ -558,20 +568,22 @@
                     phone: tellerData.phone || '',
                     status: tellerData.status || 'active',
                     loginTimestamp: new Date().toISOString(),
-                    isAdmin: ADMIN_TELLER_IDS.includes(tellerId) // Mark if this is an admin teller
+                    isAdmin: ADMIN_TELLER_NUMBERS.includes(tellerNumberFromBackend) // Check by teller_number, not database ID
                 };
 
                 sessionStorage.setItem('loggedInTeller', JSON.stringify(loggedInTeller));
                 console.log('✅ Login success, session stored:', loggedInTeller);
 
-                // Determine redirect page based on teller ID
+                // Determine redirect page based on teller NUMBER
                 let redirectPage = 'teller-dashboard.html'; // default dashboard
                 
-                if (ADMIN_TELLER_IDS.includes(tellerId)) {
+                if (ADMIN_TELLER_NUMBERS.includes(tellerNumberFromBackend)) {
                     redirectPage = 'teller-management.html';
                     showSuccess('✅ Admin access granted! Redirecting to management panel...');
+                    console.log('Redirecting to management page for teller number:', tellerNumberFromBackend);
                 } else {
                     showSuccess('✅ Access granted! Redirecting to teller dashboard...');
+                    console.log('Redirecting to dashboard for teller number:', tellerNumberFromBackend);
                 }
                 
                 // slight delay to show success message then redirect
@@ -763,11 +775,13 @@
             try {
                 const teller = JSON.parse(existing);
                 if (teller && teller.id) {
-                    console.log('Active session found');
-                    // Redirect based on stored admin flag or ID
-                    if (ADMIN_TELLER_IDS.includes(teller.id)) {
+                    console.log('Active session found:', teller);
+                    // Redirect based on stored admin flag or teller_number
+                    if (teller.isAdmin || ADMIN_TELLER_NUMBERS.includes(teller.teller_number)) {
+                        console.log('Existing session is admin, redirecting to management');
                         window.location.href = 'teller-management.html';
                     } else {
+                        console.log('Existing session is regular teller, redirecting to dashboard');
                         window.location.href = 'teller-dashboard.html';
                     }
                 }
