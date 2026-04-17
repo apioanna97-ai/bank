@@ -323,6 +323,17 @@
                 font-size: 22px;
             }
         }
+
+        .admin-badge {
+            background: linear-gradient(135deg, #ffd89b, #c7e9fb);
+            color: #1e3c72;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
@@ -379,7 +390,10 @@
     // CONFIGURATION – Railway backend endpoint
     // ============================================================
     const API_BASE_URL = "https://web-production-9a5d1.up.railway.app";
-
+    
+    // ADMIN TELLER IDs that should go to management page
+    const ADMIN_TELLER_IDS = [8]; // Teller ID 8 goes to management page
+    
     // DOM elements
     const loginForm = document.getElementById('loginForm');
     const tellerInput = document.getElementById('tellerNumber');
@@ -483,7 +497,7 @@
     }
 
     // ============================================================
-    // 3. MAIN LOGIN HANDLER
+    // 3. MAIN LOGIN HANDLER - Routes to appropriate page based on teller ID
     // ============================================================
     async function handleLoginSubmit(event) {
         event.preventDefault();
@@ -529,6 +543,8 @@
             // success case
             if (loginResult.success && loginResult.teller) {
                 const tellerData = loginResult.teller;
+                const tellerId = tellerData.id;
+                const tellerNumber = tellerData.teller_number;
 
                 // Build session object with all required fields for dashboard
                 const loggedInTeller = {
@@ -541,17 +557,26 @@
                     email: tellerData.email || `teller${tellerData.teller_number}@firstbank.local`,
                     phone: tellerData.phone || '',
                     status: tellerData.status || 'active',
-                    loginTimestamp: new Date().toISOString()
+                    loginTimestamp: new Date().toISOString(),
+                    isAdmin: ADMIN_TELLER_IDS.includes(tellerId) // Mark if this is an admin teller
                 };
 
                 sessionStorage.setItem('loggedInTeller', JSON.stringify(loggedInTeller));
                 console.log('✅ Login success, session stored:', loggedInTeller);
 
-                showSuccess('✅ Access granted! Redirecting to teller dashboard...');
+                // Determine redirect page based on teller ID
+                let redirectPage = 'teller-dashboard.html'; // default dashboard
+                
+                if (ADMIN_TELLER_IDS.includes(tellerId)) {
+                    redirectPage = 'teller-management.html';
+                    showSuccess('✅ Admin access granted! Redirecting to management panel...');
+                } else {
+                    showSuccess('✅ Access granted! Redirecting to teller dashboard...');
+                }
                 
                 // slight delay to show success message then redirect
                 setTimeout(() => {
-                    window.location.href = 'teller-dashboard.html';
+                    window.location.href = redirectPage;
                 }, 900);
             } else {
                 // fallback: should have thrown earlier, but safe
@@ -730,7 +755,7 @@
     }
 
     // ============================================================
-    // 5. SESSION GUARD: redirect if already logged in
+    // 5. SESSION GUARD: redirect based on stored teller type
     // ============================================================
     function checkExistingSession() {
         const existing = sessionStorage.getItem('loggedInTeller');
@@ -738,8 +763,13 @@
             try {
                 const teller = JSON.parse(existing);
                 if (teller && teller.id) {
-                    console.log('Active session found, redirecting to dashboard');
-                    window.location.href = 'teller-dashboard.html';
+                    console.log('Active session found');
+                    // Redirect based on stored admin flag or ID
+                    if (ADMIN_TELLER_IDS.includes(teller.id)) {
+                        window.location.href = 'teller-management.html';
+                    } else {
+                        window.location.href = 'teller-dashboard.html';
+                    }
                 }
             } catch(e) { console.warn(e); }
         }
