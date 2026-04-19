@@ -2,941 +2,687 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-  />
-  <title>Teller Access | First Community Bank Queue System</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Teller Access — First Community Bank</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --bg-start: #0b2b44;
-      --bg-end: #123e6a;
-      --card-bg: rgba(255, 255, 255, 0.98);
-      --text-dark: #0f172a;
-      --text-muted: #475569;
-      --brand: #2c7da0;
-      --brand-dark: #1f5f7c;
-      --success: #127a4b;
-      --success-dark: #0e5d39;
-      --danger: #c7362b;
-      --danger-bg: #fff1f1;
-      --success-bg: #ecfdf3;
-      --border: #dbe4ee;
-      --input-bg: #ffffff;
-      --surface: #f8fafc;
-      --shadow: 0 24px 50px rgba(0, 0, 0, 0.22);
-      --radius-xl: 32px;
-      --radius-lg: 22px;
-      --radius-md: 16px;
-      --radius-sm: 12px;
+      --bg-start:    #0b2b44;
+      --bg-end:      #123e6a;
+      --card-bg:     #ffffff;
+      --text-dark:   #0f172a;
+      --text-muted:  #475569;
+      --text-faint:  #94a3b8;
+
+      --brand:       #2c7da0;
+      --brand-dark:  #1f5f7c;
+      --brand-lt:    #e8f4fa;
+      --brand-pale:  #b8d9ea;
+
+      --success:     #127a4b;
+      --success-dk:  #0e5d39;
+      --success-lt:  #ecfdf3;
+      --success-pale:#c7f0d8;
+
+      --danger:      #c7362b;
+      --danger-lt:   #fff1f1;
+      --danger-pale: #ffd4d4;
+
+      --border:      #dbe4ee;
+      --border-lt:   #eef2f7;
+      --surface:     #f8fafc;
+
+      --shadow-md: 0 20px 48px rgba(0,0,0,.22), 0 4px 12px rgba(0,0,0,.1);
+
+      --r-md:   12px;
+      --r-lg:   18px;
+      --r-xl:   24px;
+      --r-pill: 100px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      -webkit-text-size-adjust: 100%;
-    }
+    html { -webkit-text-size-adjust: 100%; }
 
     body {
-      font-family: "Segoe UI", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Roboto", sans-serif;
-      min-height: 100svh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      color: white;
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 2rem 1rem;
+      color: #fff;
       background:
-        radial-gradient(circle at top right, rgba(255,255,255,0.08), transparent 30%),
+        radial-gradient(circle at top right, rgba(255,255,255,.07), transparent 35%),
         linear-gradient(145deg, var(--bg-start) 0%, var(--bg-end) 100%);
       position: relative;
       overflow-x: hidden;
     }
 
     body::before {
-      content: "";
+      content: '';
       position: fixed;
       inset: 0;
       pointer-events: none;
-      background-image: radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px);
+      background-image: radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
       background-size: 28px 28px;
-      opacity: 0.8;
     }
 
-    .login-shell {
+    .shell {
       width: 100%;
-      max-width: 500px;
+      max-width: 420px;
       position: relative;
       z-index: 1;
-      animation: fadeSlideUp 0.5s ease-out;
+      animation: rise .45s ease-out;
     }
 
-    @keyframes fadeSlideUp {
-      from {
-        opacity: 0;
-        transform: translateY(24px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* ── Header ── */
     .header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 1.75rem;
       text-align: center;
-      margin-bottom: 22px;
     }
 
-    .bank-logo {
-      font-size: clamp(2.7rem, 7vw, 4rem);
-      line-height: 1;
-      margin-bottom: 8px;
-      filter: drop-shadow(0 8px 14px rgba(0,0,0,0.22));
+    .logo-mark {
+      width: 50px; height: 50px;
+      border-radius: 50%;
+      background: var(--brand);
+      display: grid;
+      place-items: center;
+      margin-bottom: 4px;
+    }
+
+    .logo-mark svg {
+      width: 22px; height: 22px;
+      fill: none; stroke: #fff;
+      stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
     }
 
     .bank-name {
-      font-size: clamp(1.35rem, 4vw, 1.8rem);
-      font-weight: 800;
-      letter-spacing: 0.06em;
-      line-height: 1.2;
-      background: linear-gradient(135deg, #ffffff, #d9f0ff);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
+      font-family: 'Playfair Display', serif;
+      font-size: 17px; font-weight: 500;
+      color: #fff; letter-spacing: .3px;
     }
 
-    .tagline {
-      font-size: 0.92rem;
-      opacity: 0.88;
-      margin-top: 6px;
-      font-weight: 500;
+    .bank-sub {
+      font-size: 12px;
+      color: rgba(255,255,255,.5);
+      font-weight: 300;
     }
 
-    .back-home {
-      margin-top: 14px;
+    .back-link {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 16px;
-      min-height: 42px;
-      border-radius: 999px;
+      gap: 6px;
+      margin-top: 4px;
+      padding: 8px 16px;
+      border-radius: var(--r-pill);
+      font-size: 12.5px; font-weight: 400;
+      color: rgba(255,255,255,.75);
       text-decoration: none;
-      color: #fff;
-      font-size: 0.875rem;
-      font-weight: 600;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.18);
-      backdrop-filter: blur(6px);
-      transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+      border: 1px solid rgba(255,255,255,.15);
+      background: rgba(255,255,255,.08);
+      transition: background .18s, color .18s;
     }
 
-    .back-home:hover,
-    .back-home:focus-visible {
-      background: rgba(255,255,255,0.2);
-      border-color: rgba(255,255,255,0.28);
-      transform: translateY(-1px);
-      outline: none;
+    .back-link:hover { background: rgba(255,255,255,.15); color: #fff; }
+
+    .back-link svg {
+      width: 13px; height: 13px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
     }
 
-    .login-card {
+    /* ── Card ── */
+    .card {
       background: var(--card-bg);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: var(--r-xl);
+      padding: 2rem;
+      box-shadow: var(--shadow-md);
       color: var(--text-dark);
-      border-radius: var(--radius-xl);
-      padding: 30px;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(255,255,255,0.28);
-      backdrop-filter: blur(8px);
     }
 
-    .login-title {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 19px; font-weight: 500;
+      color: var(--bg-start);
+      margin-bottom: 1.5rem;
       text-align: center;
-      font-size: clamp(1.35rem, 4vw, 1.7rem);
-      font-weight: 800;
-      color: #0b2b44;
-      margin-bottom: 24px;
     }
 
-    .message {
+    /* ── Messages ── */
+    .msg {
       display: none;
-      margin-bottom: 16px;
-      padding: 14px 16px;
-      border-radius: 16px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      line-height: 1.4;
-      text-align: center;
+      padding: 11px 14px;
+      border-radius: var(--r-md);
+      font-size: 13px;
+      margin-bottom: 1.25rem;
+      line-height: 1.45;
     }
 
-    .error-message {
-      background: var(--danger-bg);
-      color: var(--danger);
-      border: 1px solid #ffd4d4;
-    }
+    .msg-error   { background: var(--danger-lt);  color: var(--danger);  border: 1px solid var(--danger-pale); }
+    .msg-success { background: var(--success-lt); color: var(--success); border: 1px solid var(--success-pale); }
 
-    .success-message {
-      background: var(--success-bg);
-      color: #146c43;
-      border: 1px solid #c7f0d8;
-    }
-
-    .form-group {
-      margin-bottom: 18px;
-    }
+    /* ── Form groups ── */
+    .form-group { margin-bottom: 1.1rem; }
 
     .form-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-      font-size: 0.92rem;
-      font-weight: 700;
-      color: #1f3a5f;
-    }
-
-    .input-wrap {
-      position: relative;
+      display: block;
+      font-size: 11.5px; font-weight: 500;
+      letter-spacing: .7px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 7px;
     }
 
     .form-input {
       width: 100%;
-      min-height: 54px;
-      padding: 14px 18px;
-      border: 2px solid var(--border);
-      border-radius: 18px;
-      background: var(--input-bg);
+      height: 50px;
+      padding: 0 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-md);
+      background: #fff;
       color: var(--text-dark);
-      font-size: 1rem;
-      font-weight: 600;
-      transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px; font-weight: 400;
+      transition: border-color .15s, box-shadow .15s;
       appearance: none;
     }
 
-    .form-input::placeholder {
-      color: #94a3b8;
-      font-weight: 500;
-    }
+    .form-input::placeholder { color: var(--text-faint); font-weight: 300; }
 
     .form-input:focus {
       outline: none;
       border-color: var(--brand);
-      box-shadow: 0 0 0 4px rgba(44, 125, 160, 0.14);
+      box-shadow: 0 0 0 3px rgba(44,125,160,.12);
     }
 
-    .form-help {
-      margin-top: 8px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
+    .form-hint {
+      font-size: 11px;
+      color: var(--text-faint);
+      margin-top: 5px;
+      font-weight: 300;
     }
 
-    .login-btn {
-      width: 100%;
-      min-height: 56px;
-      margin-top: 8px;
-      border: none;
-      border-radius: 999px;
-      background: linear-gradient(105deg, var(--success), #1f9d65);
-      color: white;
-      font-size: 1rem;
-      font-weight: 800;
-      letter-spacing: 0.02em;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 14px 20px;
-      box-shadow: 0 10px 24px rgba(18, 122, 75, 0.28);
-      transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
-    }
+    /* ── PIN section ── */
 
-    .login-btn:hover:not(:disabled),
-    .login-btn:focus-visible:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 28px rgba(18, 122, 75, 0.34);
-      filter: brightness(1.02);
-      outline: none;
-    }
-
-    .login-btn:disabled {
-      opacity: 0.75;
-      cursor: wait;
-    }
-
-    .submit-hint {
-      margin-top: 10px;
-      text-align: center;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-
-    .server-status {
-      margin-top: 18px;
-      text-align: center;
-      padding: 11px 14px;
-      border-radius: 999px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      background: #f1f5f9;
-      color: #1e293b;
-    }
-
-    .server-online {
-      color: #0f5e3a;
-      background: #e6f8ef;
-    }
-
-    .server-offline {
-      color: #b91c1c;
-      background: #fee2e2;
-    }
-
+    /* Dot display — always visible above the pad */
     .pin-display {
-      display: none;
-      margin-top: 10px;
+      font-family: 'DM Mono', monospace;
+      font-size: 28px;
+      letter-spacing: 14px;
+      color: var(--brand-dark);
       text-align: center;
-      font-family: "Courier New", monospace;
-      font-size: 1.8rem;
-      letter-spacing: 10px;
-      font-weight: 800;
-      padding: 14px 12px;
-      border-radius: 18px;
-      background: #f1f5f9;
-      color: #0b2b44;
+      padding: 12px 12px 12px 26px; /* offset for letter-spacing gap */
+      background: var(--brand-lt);
+      border: 1.5px solid var(--brand-pale);
+      border-radius: var(--r-md);
+      margin-bottom: 10px;
       user-select: none;
+      cursor: default;
     }
 
+    /* Hidden real input that captures keyboard events */
+    .pin-real-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      width: 1px; height: 1px;
+      top: 0; left: 0;
+    }
+
+    /* PIN grid — always shown */
     .pin-grid {
-      display: none;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 6px;
+      position: relative; /* for the real input to anchor */
     }
 
     .pin-btn {
-      min-height: 56px;
-      border-radius: 18px;
-      border: 1.5px solid #d4dde8;
-      background: #f8fafc;
-      color: #0f172a;
-      font-size: 1.2rem;
-      font-weight: 800;
+      height: 52px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-md);
+      background: var(--surface);
+      color: var(--text-dark);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 17px; font-weight: 500;
       cursor: pointer;
-      transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+      transition: background .12s, border-color .12s, transform .1s;
       -webkit-tap-highlight-color: transparent;
     }
 
-    .pin-btn:hover,
-    .pin-btn:focus-visible {
-      background: #eef4f8;
-      border-color: #bfd0df;
-      outline: none;
-    }
+    .pin-btn:hover  { background: var(--brand-lt); border-color: var(--brand-pale); }
+    .pin-btn:active { transform: scale(.96); }
 
-    .pin-btn:active {
-      transform: scale(0.97);
+    .pin-back {
+      font-size: 19px;
+      background: var(--surface);
     }
 
     .pin-clear {
-      background: #fff1f1;
-      color: #b91c1c;
-      border-color: #fecaca;
+      background: var(--danger-lt);
+      color: var(--danger);
+      border-color: var(--danger-pale);
+      font-size: 13px; font-weight: 500;
     }
 
-    .toggle-pin {
-      margin-top: 12px;
+    .pin-clear:hover { background: #ffe4e4; border-color: #ffb8b8; }
+
+    /* Keyboard hint */
+    .pin-hint {
       text-align: center;
+      font-size: 11px;
+      color: var(--text-faint);
+      font-weight: 300;
+      margin-top: 2px;
     }
 
-    .toggle-pin a {
-      color: var(--brand);
-      text-decoration: none;
-      font-size: 0.88rem;
-      font-weight: 700;
-      border-bottom: 1px dashed rgba(44, 125, 160, 0.45);
-    }
-
-    .toggle-pin a:hover,
-    .toggle-pin a:focus-visible {
-      color: var(--brand-dark);
-      outline: none;
-    }
-
-    .loading-spinner-sm {
-      width: 18px;
-      height: 18px;
-      border: 2px solid rgba(255,255,255,0.9);
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+    .pin-hint kbd {
       display: inline-block;
+      padding: 1px 5px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    /* ── Login button ── */
+    .login-btn {
+      width: 100%;
+      height: 50px;
+      margin-top: 1.1rem;
+      border: none;
+      border-radius: var(--r-pill);
+      background: linear-gradient(110deg, var(--success) 0%, #1f9d65 100%);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14.5px; font-weight: 500;
+      letter-spacing: .3px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 8px 20px rgba(18,122,75,.25);
+      transition: filter .18s, transform .1s, box-shadow .18s;
     }
 
-    .footer {
-      margin-top: 18px;
+    .login-btn:hover:not(:disabled)  { filter: brightness(1.06); box-shadow: 0 10px 26px rgba(18,122,75,.32); }
+    .login-btn:active:not(:disabled) { transform: scale(.985); }
+    .login-btn:disabled {
+      background: var(--border);
+      color: var(--text-faint);
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .spinner-sm {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Server status ── */
+    .server-status {
+      margin-top: 1.1rem;
       text-align: center;
-      color: rgba(255,255,255,0.8);
-      font-size: 0.8rem;
-      line-height: 1.55;
+      padding: 9px 16px;
+      border-radius: var(--r-pill);
+      font-size: 11.5px; font-weight: 400;
+      color: var(--text-faint);
+      background: var(--surface);
+      border: 1px solid var(--border-lt);
+      transition: background .3s, color .3s, border-color .3s;
     }
 
-    @media (max-width: 640px) {
-      body {
-        padding: 16px;
-        align-items: stretch;
-      }
-
-      .login-shell {
-        max-width: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        min-height: calc(100svh - 32px);
-      }
-
-      .login-card {
-        padding: 24px 18px;
-        border-radius: 26px;
-      }
-
-      .pin-btn {
-        min-height: 52px;
-        font-size: 1.1rem;
-      }
-
-      .form-input {
-        min-height: 52px;
-      }
+    .server-status .dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      margin-right: 6px;
+      vertical-align: middle;
+      opacity: .65;
     }
 
-    @media (max-width: 380px) {
-      .login-card {
-        padding: 20px 16px;
-      }
+    .server-status.online  { background: var(--success-lt);  color: var(--success); border-color: var(--success-pale); }
+    .server-status.offline { background: var(--danger-lt);   color: var(--danger);  border-color: var(--danger-pale); }
 
-      .bank-name {
-        letter-spacing: 0.03em;
-      }
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 11px;
+      color: rgba(255,255,255,.32);
+      font-weight: 300;
+      line-height: 1.8;
+    }
 
-      .pin-display {
-        font-size: 1.5rem;
-        letter-spacing: 8px;
-      }
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      body { padding: 1.25rem .75rem; align-items: flex-start; }
+      .shell { min-height: calc(100dvh - 2.5rem); display: flex; flex-direction: column; justify-content: center; }
+      .card { padding: 1.5rem 1.25rem; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      * {
-        animation: none !important;
-        transition: none !important;
-        scroll-behavior: auto !important;
-      }
+      *, *::before, *::after { animation: none !important; transition: none !important; }
     }
   </style>
 </head>
 <body>
-  <main class="login-shell">
-    <header class="header">
-      <div class="bank-logo" aria-hidden="true">🏛️</div>
-      <div class="bank-name">FIRST COMMUNITY BANK</div>
 
-      <a href="index.html" class="back-home">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-        Back to Home
-      </a>
-    </header>
+<main class="shell">
 
-    <section class="login-card" aria-labelledby="loginTitle">
-      <h1 class="login-title" id="loginTitle">
-        <span aria-hidden="true">🔐</span>
-        Teller Login
-      </h1>
+  <header class="header">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    </div>
+    <div class="bank-name">First Community Bank</div>
+    <div class="bank-sub">Queue Management System</div>
+    <a href="index.html" class="back-link">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Back to home
+    </a>
+  </header>
 
-      <div class="message error-message" id="errorMessage" aria-live="polite"></div>
-      <div class="message success-message" id="successMessage" aria-live="polite"></div>
+  <div class="card">
+    <div class="card-title">Teller Sign In</div>
 
-      <form id="loginForm" novalidate>
-        <div class="form-group">
-          <label class="form-label" for="tellerNumber">
-            <span aria-hidden="true">👤</span>
-            Teller Number
-          </label>
-          <div class="input-wrap">
-            <input
-              type="text"
-              class="form-input"
-              id="tellerNumber"
-              name="tellerNumber"
-              placeholder="e.g., 1001"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              autocomplete="username"
-              enterkeyhint="next"
-              required
-            />
-          </div>
-          <div class="form-help">Use digits only.</div>
-        </div>
+    <div class="msg msg-error"   id="errorMessage"   aria-live="polite"></div>
+    <div class="msg msg-success" id="successMessage" aria-live="polite"></div>
 
-        <div class="form-group" id="pinInputGroup">
-          <label class="form-label" for="pinCode">
-            <span aria-hidden="true">🔒</span>
-            Secure PIN
-          </label>
-          <div class="input-wrap">
-            <input
-              type="password"
-              class="form-input"
-              id="pinCode"
-              name="pinCode"
-              placeholder="Enter 4-digit PIN"
-              maxlength="4"
-              inputmode="numeric"
-              pattern="[0-9]{4}"
-              autocomplete="current-password"
-              enterkeyhint="go"
-              required
-            />
-          </div>
-          <div class="form-help">4 digits required.</div>
-        </div>
+    <form id="loginForm" novalidate>
 
-        <button type="submit" class="login-btn" id="loginBtn">
-          <span aria-hidden="true">🔓</span>
-          <span>LOGIN TO DASHBOARD</span>
-        </button>
-
-        <div class="submit-hint">Press Enter to submit</div>
-      </form>
-
-      <div class="server-status" id="serverStatus">
-        🔌 Verifying secure connection...
+      <!-- Teller number -->
+      <div class="form-group">
+        <label class="form-label" for="tellerNumber">Teller Number</label>
+        <input
+          type="text"
+          class="form-input"
+          id="tellerNumber"
+          placeholder="e.g. 1001"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          autocomplete="username"
+          enterkeyhint="next"
+          required
+        />
+        <div class="form-hint">Digits only</div>
       </div>
-    </section>
 
-    <footer class="footer">
-      <p>© 2025 First Community Bank | Next-gen Queue System</p>
-      <p>📞 Contact admin for PIN reset | Secure environment</p>
-    </footer>
-  </main>
+      <!-- PIN — dot display + pad always shown; keyboard works automatically -->
+      <div class="form-group">
+        <label class="form-label">Secure PIN</label>
 
-  <script>
-    const API_BASE_URL = "https://web-production-9a5d1.up.railway.app";
-    const ADMIN_TELLER_NUMBERS = [8];
+        <!-- Dot progress display -->
+        <div class="pin-display" id="pinDisplay" aria-hidden="true">○○○○</div>
 
-    const loginForm = document.getElementById("loginForm");
-    const tellerInput = document.getElementById("tellerNumber");
-    const pinInput = document.getElementById("pinCode");
-    const loginBtn = document.getElementById("loginBtn");
-    const errorDiv = document.getElementById("errorMessage");
-    const successDiv = document.getElementById("successMessage");
-    const serverStatusSpan = document.getElementById("serverStatus");
+        <!-- Invisible real input — receives focus for keyboard entry -->
+        <input
+          type="password"
+          class="pin-real-input"
+          id="pinCode"
+          maxlength="4"
+          inputmode="numeric"
+          autocomplete="current-password"
+          aria-label="Secure PIN"
+          required
+        />
 
-    let pinPadActive = false;
-    let virtualPinButtonsAdded = false;
+        <!-- On-screen PIN pad -->
+        <div class="pin-grid" id="pinGrid">
+          <button type="button" class="pin-btn" data-d="1">1</button>
+          <button type="button" class="pin-btn" data-d="2">2</button>
+          <button type="button" class="pin-btn" data-d="3">3</button>
+          <button type="button" class="pin-btn" data-d="4">4</button>
+          <button type="button" class="pin-btn" data-d="5">5</button>
+          <button type="button" class="pin-btn" data-d="6">6</button>
+          <button type="button" class="pin-btn" data-d="7">7</button>
+          <button type="button" class="pin-btn" data-d="8">8</button>
+          <button type="button" class="pin-btn" data-d="9">9</button>
+          <button type="button" class="pin-btn pin-clear" id="pinClear">Clear</button>
+          <button type="button" class="pin-btn" data-d="0">0</button>
+          <button type="button" class="pin-btn pin-back" id="pinBack">⌫</button>
+        </div>
 
-    function hideMessages() {
-      errorDiv.style.display = "none";
-      successDiv.style.display = "none";
+        <div class="pin-hint">Tap the pad or type on your <kbd>keyboard</kbd> — both work</div>
+      </div>
+
+      <button type="submit" class="login-btn" id="loginBtn">
+        Login to Dashboard
+      </button>
+
+    </form>
+
+    <div class="server-status" id="serverStatus">
+      <span class="dot"></span>Verifying secure connection…
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div>© 2025 First Community Bank · Queue System</div>
+    <div>Contact admin for PIN reset · Secure environment</div>
+  </footer>
+
+</main>
+
+<script>
+  const API_BASE_URL      = 'https://web-production-9a5d1.up.railway.app';
+  const ADMIN_TELLER_NUMS = [8];
+
+  const loginForm   = document.getElementById('loginForm');
+  const tellerInput = document.getElementById('tellerNumber');
+  const pinInput    = document.getElementById('pinCode');
+  const pinDisplay  = document.getElementById('pinDisplay');
+  const pinGrid     = document.getElementById('pinGrid');
+  const loginBtn    = document.getElementById('loginBtn');
+  const errorDiv    = document.getElementById('errorMessage');
+  const successDiv  = document.getElementById('successMessage');
+  const statusEl    = document.getElementById('serverStatus');
+
+  // ── PIN display sync ──
+  function updatePinDisplay() {
+    const n = pinInput.value.length;
+    pinDisplay.textContent = '●'.repeat(n) + '○'.repeat(4 - n);
+  }
+
+  // Clicking anywhere on the display or pad area focuses the hidden input
+  // so physical keyboard digits flow straight in
+  function focusPin() { pinInput.focus(); }
+
+  pinDisplay.addEventListener('click', focusPin);
+  pinGrid.addEventListener('click', focusPin);
+
+  // On-screen pad buttons
+  pinGrid.querySelectorAll('[data-d]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (pinInput.value.length < 4) {
+        pinInput.value += btn.dataset.d;
+        updatePinDisplay();
+        if (pinInput.value.length === 4) loginBtn.focus();
+      }
+    });
+  });
+
+  document.getElementById('pinBack').addEventListener('click', () => {
+    pinInput.value = pinInput.value.slice(0, -1);
+    updatePinDisplay();
+    focusPin();
+  });
+
+  document.getElementById('pinClear').addEventListener('click', () => {
+    pinInput.value = '';
+    updatePinDisplay();
+    focusPin();
+  });
+
+  // Keyboard input on the hidden field updates the display live
+  pinInput.addEventListener('input', () => {
+    pinInput.value = pinInput.value.replace(/\D/g, '').slice(0, 4);
+    updatePinDisplay();
+    if (pinInput.value.length === 4) loginBtn.focus();
+  });
+
+  // Enter on PIN submits
+  pinInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); loginForm.requestSubmit(); }
+  });
+
+  // ── Teller number field ──
+  tellerInput.addEventListener('input', () => {
+    tellerInput.value = tellerInput.value.replace(/\D/g, '');
+  });
+
+  tellerInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); focusPin(); }
+  });
+
+  tellerInput.addEventListener('wheel', e => e.preventDefault(), { passive: false });
+
+  // ── Messages ──
+  function hideMessages() { errorDiv.style.display = successDiv.style.display = 'none'; }
+
+  function showError(msg, ms = 5000) {
+    errorDiv.textContent = msg; errorDiv.style.display = 'block'; successDiv.style.display = 'none';
+    if (ms) setTimeout(() => { errorDiv.style.display = 'none'; }, ms);
+  }
+
+  function showSuccess(msg, ms = 2500) {
+    successDiv.textContent = msg; successDiv.style.display = 'block'; errorDiv.style.display = 'none';
+    if (ms) setTimeout(() => { successDiv.style.display = 'none'; }, ms);
+  }
+
+  // ── Server health ──
+  async function checkServer() {
+    try {
+      const ctrl = new AbortController();
+      setTimeout(() => ctrl.abort(), 5000);
+      const res  = await fetch(`${API_BASE_URL}/api/health`, { signal: ctrl.signal });
+      const data = await res.json();
+      if (data?.status === 'ok') {
+        statusEl.innerHTML = '<span class="dot"></span>Server online · Secure channel ready';
+        statusEl.className = 'server-status online';
+        return true;
+      }
+      throw new Error();
+    } catch {
+      statusEl.innerHTML = '<span class="dot"></span>Server unreachable · Contact admin';
+      statusEl.className = 'server-status offline';
+      return false;
     }
+  }
 
-    function showError(message, duration = 4500) {
-      errorDiv.textContent = message;
-      errorDiv.style.display = "block";
-      successDiv.style.display = "none";
+  // ── Login API ──
+  async function performLogin(tellerNumber, pin) {
+    const res  = await fetch(`${API_BASE_URL}/api/tellers/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ teller_number: parseInt(tellerNumber, 10), pin_code: pin })
+    });
+    const ct   = res.headers.get('content-type') || '';
+    const data = ct.includes('application/json')
+      ? await res.json()
+      : (() => { throw new Error('Invalid server response'); })();
+    if (!res.ok || !data.success) throw new Error(data.message || `Login failed (${res.status})`);
+    return data;
+  }
 
+  // ── Loading state ──
+  function setLoading(on) {
+    loginBtn.disabled  = on;
+    loginBtn.innerHTML = on
+      ? '<div class="spinner-sm"></div> Verifying credentials…'
+      : 'Login to Dashboard';
+  }
+
+  // ── Submit ──
+  async function handleSubmit(e) {
+    e.preventDefault();
+    hideMessages();
+
+    const tNum = tellerInput.value.trim();
+    const pin  = pinInput.value.trim();
+
+    if (!tNum || !/^\d+$/.test(tNum))  { showError('Please enter a valid teller number.'); tellerInput.focus(); return; }
+    if (!pin  || !/^\d{4}$/.test(pin)) { showError('Please enter your 4-digit PIN.'); focusPin(); return; }
+
+    setLoading(true);
+    try {
+      const result  = await performLogin(tNum, pin);
+      const t       = result.teller;
+      const isAdmin = ADMIN_TELLER_NUMS.includes(t.teller_number);
+
+      sessionStorage.setItem('loggedInTeller', JSON.stringify({
+        id:               t.id,
+        teller_number:    t.teller_number,
+        teller_name:      t.teller_name || `Teller ${t.teller_number}`,
+        name:             t.teller_name || `Teller ${t.teller_number}`,
+        serving_category: t.serving_category || 'General',
+        serviceCategory:  t.serving_category || 'General',
+        email:            t.email  || `teller${t.teller_number}@firstbank.local`,
+        phone:            t.phone  || '',
+        status:           t.status || 'active',
+        loginTimestamp:   new Date().toISOString(),
+        isAdmin
+      }));
+
+      showSuccess(isAdmin
+        ? 'Admin access granted. Redirecting to management panel…'
+        : 'Access granted. Redirecting to teller dashboard…'
+      );
       setTimeout(() => {
-        if (errorDiv.style.display === "block") errorDiv.style.display = "none";
-      }, duration);
+        window.location.href = isAdmin ? 'teller-management.html' : 'teller-dashboard.html';
+      }, 900);
+
+    } catch (err) {
+      let msg = err.message || 'Network error.';
+      if (msg.includes('fetch') || msg.includes('Network'))
+        msg = 'Could not connect to server. Please check your connection.';
+      showError(msg);
+      setLoading(false);
     }
-
-    function showSuccess(message, duration = 2200) {
-      successDiv.textContent = message;
-      successDiv.style.display = "block";
-      errorDiv.style.display = "none";
-
-      setTimeout(() => {
-        if (successDiv.style.display === "block") successDiv.style.display = "none";
-      }, duration);
-    }
-
-    async function checkServerConnection() {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-        const response = await fetch(`${API_BASE_URL}/api/health`, {
-          method: "GET",
-          headers: { Accept: "application/json" },
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data?.status === "ok") {
-          serverStatusSpan.innerHTML = "✅ Server Online · Secure channel ready";
-          serverStatusSpan.className = "server-status server-online";
-          return true;
-        }
-
-        throw new Error("unhealthy");
-      } catch (err) {
-        console.warn("Health check failed:", err);
-        serverStatusSpan.innerHTML =
-          "⚠️ Server unreachable — using offline demo mode (contact admin)";
-        serverStatusSpan.className = "server-status server-offline";
-        return false;
-      }
-    }
-
-    async function performLogin(tellerNumber, pinCode) {
-      const payload = {
-        teller_number: parseInt(tellerNumber, 10),
-        pin_code: pinCode
-      };
-
-      const response = await fetch(`${API_BASE_URL}/api/tellers/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
-
-      let result;
-      const contentType = response.headers.get("content-type");
-
-      if (contentType && contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
-        throw new Error(`Invalid server response: ${text.substring(0, 80)}`);
-      }
-
-      if (!response.ok) {
-        throw new Error(result.message || `Login failed (${response.status})`);
-      }
-
-      if (!result.success) {
-        throw new Error(result.message || "Invalid teller number or PIN");
-      }
-
-      return result;
-    }
-
-    function setLoadingState(isLoading) {
-      if (isLoading) {
-        loginBtn.disabled = true;
-        loginBtn.innerHTML =
-          '<span aria-hidden="true">⏳</span><span>VERIFYING CREDENTIALS</span><span class="loading-spinner-sm" aria-hidden="true"></span>';
-      } else {
-        loginBtn.disabled = false;
-        loginBtn.innerHTML =
-          '<span aria-hidden="true">🔓</span><span>LOGIN TO DASHBOARD</span>';
-      }
-    }
-
-    function sanitizeNumericInput(input, maxLength = Infinity) {
-      input.value = input.value.replace(/\D/g, "").slice(0, maxLength);
-    }
-
-    async function handleLoginSubmit(event) {
-      event.preventDefault();
-      hideMessages();
-
-      const tellerNumberRaw = tellerInput.value.trim();
-      const pinRaw = pinInput.value.trim();
-
-      if (!tellerNumberRaw) {
-        showError("📛 Please enter your teller number");
-        tellerInput.focus();
-        return;
-      }
-
-      if (!/^\d+$/.test(tellerNumberRaw)) {
-        showError("Teller number must contain only digits");
-        tellerInput.focus();
-        return;
-      }
-
-      if (!pinRaw) {
-        showError("🔢 Please enter your 4-digit PIN");
-        pinInput.focus();
-        return;
-      }
-
-      if (!/^\d{4}$/.test(pinRaw)) {
-        showError("PIN must be exactly 4 digits");
-        pinInput.focus();
-        return;
-      }
-
-      setLoadingState(true);
-
-      try {
-        const loginResult = await performLogin(tellerNumberRaw, pinRaw);
-
-        if (loginResult.success && loginResult.teller) {
-          const tellerData = loginResult.teller;
-          const tellerNumberFromBackend = tellerData.teller_number;
-
-          const loggedInTeller = {
-            id: tellerData.id,
-            teller_number: tellerData.teller_number,
-            teller_name: tellerData.teller_name || `Teller ${tellerData.teller_number}`,
-            name: tellerData.teller_name || `Teller ${tellerData.teller_number}`,
-            serving_category: tellerData.serving_category || "General",
-            serviceCategory: tellerData.serving_category || "General",
-            email: tellerData.email || `teller${tellerData.teller_number}@firstbank.local`,
-            phone: tellerData.phone || "",
-            status: tellerData.status || "active",
-            loginTimestamp: new Date().toISOString(),
-            isAdmin: ADMIN_TELLER_NUMBERS.includes(tellerNumberFromBackend)
-          };
-
-          sessionStorage.setItem("loggedInTeller", JSON.stringify(loggedInTeller));
-
-          const redirectPage = loggedInTeller.isAdmin
-            ? "teller-management.html"
-            : "teller-dashboard.html";
-
-          showSuccess(
-            loggedInTeller.isAdmin
-              ? "✅ Admin access granted! Redirecting to management panel..."
-              : "✅ Access granted! Redirecting to teller dashboard..."
-          );
-
-          setTimeout(() => {
-            window.location.href = redirectPage;
-          }, 900);
-
-          return;
-        }
-
-        throw new Error(loginResult.message || "Authentication failed");
-      } catch (err) {
-        console.error("Login API error:", err);
-
-        let userMessage = err.message || "Network error. Unable to reach authentication server.";
-
-        if (
-          err.message.includes("Failed to fetch") ||
-          err.message.includes("NetworkError")
-        ) {
-          userMessage =
-            "🌐 Network error: Could not connect to bank server. Please verify backend is running or contact support.";
-        } else if (
-          err.message.toLowerCase().includes("pin") ||
-          err.message.toLowerCase().includes("teller")
-        ) {
-          userMessage = err.message;
-        } else {
-          userMessage = "Login service unavailable. Please try again later.";
-        }
-
-        showError(`❌ ${userMessage}`);
-        setLoadingState(false);
-      }
-    }
-
-    function createPinPadUI() {
-      const pinGroup = document.getElementById("pinInputGroup");
-      if (!pinGroup || virtualPinButtonsAdded) return;
-
-      const pinDisplayDiv = document.createElement("div");
-      pinDisplayDiv.className = "pin-display";
-      pinDisplayDiv.id = "dynamicPinDisplay";
-      pinDisplayDiv.textContent = "○○○○";
-      pinGroup.appendChild(pinDisplayDiv);
-
-      const pinGrid = document.createElement("div");
-      pinGrid.className = "pin-grid";
-      pinGrid.id = "virtualPinGrid";
-      pinGrid.innerHTML = `
-        <button type="button" class="pin-btn" data-pin-digit="1">1</button>
-        <button type="button" class="pin-btn" data-pin-digit="2">2</button>
-        <button type="button" class="pin-btn" data-pin-digit="3">3</button>
-        <button type="button" class="pin-btn" data-pin-digit="4">4</button>
-        <button type="button" class="pin-btn" data-pin-digit="5">5</button>
-        <button type="button" class="pin-btn" data-pin-digit="6">6</button>
-        <button type="button" class="pin-btn" data-pin-digit="7">7</button>
-        <button type="button" class="pin-btn" data-pin-digit="8">8</button>
-        <button type="button" class="pin-btn" data-pin-digit="9">9</button>
-        <button type="button" class="pin-btn">•</button>
-        <button type="button" class="pin-btn" data-pin-digit="0">0</button>
-        <button type="button" class="pin-btn" id="pinBackspaceBtn">⌫</button>
-      `;
-      pinGroup.appendChild(pinGrid);
-
-      const toggleContainer = document.createElement("div");
-      toggleContainer.className = "toggle-pin";
-      toggleContainer.innerHTML = '<a href="#" id="togglePinModeLink">⌨️ Switch to keyboard input</a>';
-      pinGroup.appendChild(toggleContainer);
-
-      pinGrid.querySelectorAll("[data-pin-digit]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          if (pinInput.value.length < 4) {
-            pinInput.value += btn.dataset.pinDigit;
-            updateVirtualPinDisplay();
-            if (pinInput.value.length === 4) {
-              loginBtn.focus();
-            }
-          }
-        });
-      });
-
-      document.getElementById("pinBackspaceBtn")?.addEventListener("click", () => {
-        pinInput.value = pinInput.value.slice(0, -1);
-        updateVirtualPinDisplay();
-      });
-
-      virtualPinButtonsAdded = true;
-      updateVirtualPinDisplay();
-    }
-
-    function updateVirtualPinDisplay() {
-      const displayDiv = document.getElementById("dynamicPinDisplay");
-      if (!displayDiv) return;
-
-      const len = pinInput.value.length;
-      displayDiv.textContent = "●".repeat(len) + "○".repeat(4 - len);
-    }
-
-    function togglePinInputMode() {
-      const pinDisplayDiv = document.getElementById("dynamicPinDisplay");
-      const pinGridElem = document.getElementById("virtualPinGrid");
-      const toggleLink = document.getElementById("togglePinModeLink");
-
-      if (!pinDisplayDiv || !pinGridElem) return;
-
-      if (pinPadActive) {
-        pinInput.style.display = "block";
-        pinDisplayDiv.style.display = "none";
-        pinGridElem.style.display = "none";
-        if (toggleLink) toggleLink.textContent = "📱 Switch to PIN pad";
-        pinPadActive = false;
-        pinInput.focus();
-      } else {
-        pinInput.style.display = "none";
-        pinDisplayDiv.style.display = "block";
-        pinGridElem.style.display = "grid";
-        if (toggleLink) toggleLink.textContent = "⌨️ Switch to keyboard input";
-        pinPadActive = true;
-        updateVirtualPinDisplay();
-      }
-    }
-
-    function initializePinPadForTouch() {
-      createPinPadUI();
-
-      const pinDisplayDiv = document.getElementById("dynamicPinDisplay");
-      const pinGridElem = document.getElementById("virtualPinGrid");
-      const toggleLinkElem = document.getElementById("togglePinModeLink");
-      const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-
-      if (isTouch) {
-        pinInput.style.display = "none";
-        pinDisplayDiv.style.display = "block";
-        pinGridElem.style.display = "grid";
-        pinPadActive = true;
-      } else {
-        pinInput.style.display = "block";
-        pinDisplayDiv.style.display = "none";
-        pinGridElem.style.display = "none";
-        pinPadActive = false;
-      }
-
-      toggleLinkElem?.addEventListener("click", (e) => {
-        e.preventDefault();
-        togglePinInputMode();
-      });
-
-      updateVirtualPinDisplay();
-    }
-
-    function checkExistingSession() {
-      const existing = sessionStorage.getItem("loggedInTeller");
-      if (!existing) return;
-
-      try {
-        const teller = JSON.parse(existing);
-        if (teller?.id) {
-          if (teller.isAdmin || ADMIN_TELLER_NUMBERS.includes(teller.teller_number)) {
-            window.location.href = "teller-management.html";
-          } else {
-            window.location.href = "teller-dashboard.html";
-          }
-        }
-      } catch (e) {
-        console.warn("Invalid stored session:", e);
-      }
-    }
-
-    function enableKeyboardSubmission() {
-      [tellerInput, pinInput].forEach((input) => {
-        input.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-
-            if (input === tellerInput && !pinInput.value.trim()) {
-              pinInput.focus();
-              return;
-            }
-
-            loginForm.requestSubmit();
-          }
-        });
-      });
-    }
-
-    function attachInputRules() {
-      tellerInput.addEventListener("input", () => {
-        sanitizeNumericInput(tellerInput);
-      });
-
-      pinInput.addEventListener("input", () => {
-        sanitizeNumericInput(pinInput, 4);
-        updateVirtualPinDisplay();
-      });
-    }
-
-    async function init() {
-      checkExistingSession();
-      attachInputRules();
-      enableKeyboardSubmission();
-      initializePinPadForTouch();
-      await checkServerConnection();
-
-      loginForm.addEventListener("submit", handleLoginSubmit);
-
-      tellerInput.addEventListener("wheel", (e) => e.preventDefault(), {
-        passive: false
-      });
-
-      tellerInput.focus();
-    }
-
-    init();
-  </script>
+  }
+
+  loginForm.addEventListener('submit', handleSubmit);
+
+  // ── Session check ──
+  function checkSession() {
+    try {
+      const t = JSON.parse(sessionStorage.getItem('loggedInTeller') || 'null');
+      if (t?.id) window.location.href = (t.isAdmin || ADMIN_TELLER_NUMS.includes(t.teller_number))
+        ? 'teller-management.html' : 'teller-dashboard.html';
+    } catch {}
+  }
+
+  // ── Init ──
+  function init() {
+    checkSession();
+    checkServer();
+    updatePinDisplay();
+    tellerInput.focus();
+  }
+
+  init();
+</script>
 </body>
 </html>
